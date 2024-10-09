@@ -453,20 +453,19 @@ package Game.Entity
             for (j = 0; j < l; j++)
             {
                _Ship = ships[i][j];
-               if (_Ship.state != 0) // 不处理驻留的飞船
+               if (_Ship.state == 0)
+                  continue; // 不处理驻留的飞船
+               if (_Ship.state == 1)
                {
-                  if (_Ship.state == 1)
-                  {
-                     if (aiTimers[i] < 0.5)
-                        aiTimers[i] = 0.5;
-                  }
-                  else
-                  {
-                     ships[i][j] = ships[i][l - 1];
-                     ships[i].pop();
-                     l--;
-                     j--;
-                  }
+                  if (aiTimers[i] < 0.5)
+                     aiTimers[i] = 0.5;
+               }
+               else
+               {
+                  ships[i][j] = ships[i][l - 1];
+                  ships[i].pop();
+                  l--;
+                  j--;
                }
             }
          }
@@ -499,7 +498,7 @@ package Game.Entity
          updateTimer(_dt); // 更新各种计时器
          updateAttack(_dt); // 更新天体攻击
          updateConflict(_dt); // 更新飞船攻击
-         updateCuptare(_dt); // 更新占领度
+         updateCapture(_dt); // 更新占领度
          updateBuild(_dt); // 更新飞船生产
       }
 
@@ -704,7 +703,7 @@ package Game.Entity
          conflict = _conflict;
       }
 
-      public function updateCuptare(_dt:Number):void // 更新占领度
+      public function updateCapture(_dt:Number):void // 更新占领度
       {
          if (conflict) // 战争状态下不执行该函数
          {
@@ -725,7 +724,7 @@ package Game.Entity
                break;
             }
          }
-         captureRate= ships[_captureTeam].length / (size * 100) * 10;
+         captureRate = ships[_captureTeam].length / (size * 100) * 10;
          switch (type) // 按天体计算占领速度加权
          {
             case 4: // 炮塔

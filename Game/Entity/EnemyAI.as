@@ -696,16 +696,57 @@ package Game.Entity
          var _Node:Node = null;
          sender = [];
          targets = [];
-         for each (_Node in game.nodes.active)
+         for each (_Node in game.nodes.active)// 计算出兵天体
          {
             if (!senderCheckBasic(_Node))
                continue;
-            if (!_Node.conflict)
+            if (_Node.conflict)
                continue;
             if (_Node.capturing)
             {
-            sender.push(_Node);
-
+               if(_Node.team == 0&&(100-_Node.hp)/_Node.captureRate<0.8)
+                  sender.push(_Node);
+               else if(_Node.team != 0&&_Node.hp/_Node.captureRate<0.8)
+                  sender.push(_Node);
+               break;
+            }
+         }
+         if (sender.length == 0)
+            return;
+         for each (_Node in game.nodes.active) // 计算目标天体
+         {
+            if (!targetCheckBasic(_Node))
+               continue;
+            if (_Node.team == 0 && _Node.predictedOppStrength(team) == 0 && _Node.predictedTeamStrength(team) >= _Node.size * 200)
+               continue; // 排除仅被己方以二倍标准兵力占据的中立天体
+            if (_Node.predictedOppStrength(team) > 0 && _Node.predictedTeamStrength(team) * 0.5 > _Node.predictedOppStrength(team))
+               continue; // 排除有敌方但兵力不足己方一半的天体
+            targets.push(_Node);
+         }
+         if (targets.length == 0)
+            return;
+         for each (_senderNode in sender) // 出兵
+         {
+            for each (_targetNode in targets)
+            {
+               if (_senderNode == _targetNode || _senderNode.nodeLinks.indexOf(_targetNode) == -1)
+                  continue; // 基本条件：出兵天体和目标天体不为同一个，且二者之间没有被拦截
+               if (_senderNode.teamStrength(team) + _targetNode.predictedTeamStrength(team) < _targetNode.predictedOppStrength(team))
+                  continue; // 出兵条件：出兵天体的强度和目标天体的预测强度之和高于目标天体的预测敌方强度
+               // 飞船数：目标天体上预测敌方强度的二倍减去预测己方强度一半
+               var _Ships:Number = _targetNode.predictedOppStrength(team) * 2 - _targetNode.predictedTeamStrength(team) * 0.5;
+               if (_senderNode.predictedOppStrength(team) > _senderNode.predictedTeamStrength(team))
+                  _Ships = _senderNode.teamStrength(team); // 预测出兵天体敌方兵力高于己方兵力时派出全部兵力
+               if (_Ships < _targetNode.size * 200)
+                  _Ships = _targetNode.size * 200; // 兵力不足目标二倍标准兵力时派出目标二倍标准兵力
+               var _towerAttack:Number = getLengthInTowerRange(_senderNode, _targetNode) / 4.5;
+               _Ships += _towerAttack; // 加上估损
+               if (_towerAttack > 0 && Globals.teamPops[team] < _towerAttack)
+                  continue; // 总兵力不足估损时不派兵
+               if (_towerAttack > 0 && _senderNode.teamStrength(team) < _towerAttack * 0.5)
+                  continue; // 出兵天体的兵力不足估损的一半时不派兵
+               _senderNode.sendAIShips(team, _targetNode, _Ships);
+               return;
             }
          }
       }

@@ -17,7 +17,9 @@ package Game
 
         public var fpsCalculator:Array; // 帧率计算器
         public var debugLables:Array; // 调试显示文本
-        public var nodeTagLables:Array; // 显示天体tag
+        public var nodeTagLables:Array; // 显示天体tag和战争占据状态
+        public var nodeConflictLables:Array; // 显示天体战争状态
+        public var nodeCaptureLables:Array; // 显示天体占据状态
         // #region 初始化
         public function Debug() // 构造函数
         {
@@ -30,7 +32,7 @@ package Game
             this.title = _titleMenu;
             this.debug = false;
             debugLables = [];
-            nodeTagLables = [];
+            nodeTagLables = [[],[],[]];
             fpsCalculator = [0, 0, 0, 0, 0, 0, 0];
             addDebugView();
             addEventListener("enterFrame", update);
@@ -141,39 +143,35 @@ package Game
 
         public function update_in_game():void
         {
-            if (game.nodes.active.length != nodeTagLables.length) // 重置tag
+            if (game.nodes.active.length != nodeTagLables[0].length) // 重置tag
+                init_tag();
+            for each (var _node:Node in game.nodes.active) // 更新tag位置
             {
-                for each (var _label:TextField in nodeTagLables)
-                {
-                    _label.visible = false;
-                    removeChild(_label);
-                }
-                nodeTagLables = [];
-                for each (var _node:Node in game.nodes.active)
-                {
-                    _node.tag = game.nodes.active.indexOf(_node);
-                    var _label:TextField = new TextField(60, 48, _node.tag, "Downlink12", -1, 16777215);
-                    _label.vAlign = _label.hAlign = "center";
-                    _label.pivotX = -30;
-                    _label.pivotY = -24;
-                    _label.alpha = 1;
-                    _label.touchable = false;
-                    _label.visible = true;
-                    addChild(_label);
-                    nodeTagLables.push(_label);
-                }
-            }
-            for each (var _label:TextField in nodeTagLables)
-            {
-                _label.x = game.nodes.active[_label.text].x - 30 * game.nodes.active[_label.text].size - 60;
-                _label.y = game.nodes.active[_label.text].y - 50 * game.nodes.active[_label.text].size - 48;
-                _label.visible = true;
+                nodeTagLables[0][_node.tag].x = _node.x - 30 * _node.size - 60;
+                nodeTagLables[0][_node.tag].y = _node.y - 50 * _node.size - 48;
+                nodeTagLables[1][_node.tag].x = _node.x;
+                nodeTagLables[1][_node.tag].y = _node.y - 50 * _node.size - 50;
+                nodeTagLables[2][_node.tag].x = _node.x;
+                nodeTagLables[2][_node.tag].y = _node.y - 50 * _node.size - 60;
+                if (_node.conflicted)
+                    nodeTagLables[1][_node.tag].visible = true;
+                else
+                    nodeTagLables[1][_node.tag].visible = false;
+                if (_node.captured)
+                    nodeTagLables[2][_node.tag].visible = true;
+                else
+                    nodeTagLables[2][_node.tag].visible = false;
             }
         }
 
         public function init_game():void // 进入游戏时触发一次
         {
-            nodeTagLables = [];
+            init_tag();
+        }
+
+        public function init_tag():void // 重置tag
+        {
+            clear_tag();
             for each (var _node:Node in game.nodes.active)
             {
                 _node.tag = game.nodes.active.indexOf(_node);
@@ -185,7 +183,25 @@ package Game
                 _label.touchable = false;
                 _label.visible = false;
                 addChild(_label);
-                nodeTagLables.push(_label);
+                nodeTagLables[0].push(_label);
+                _label = new TextField(60, 48, "conflicted", "Downlink12", -1, 16777215);
+                _label.vAlign = _label.hAlign = "center";
+                _label.pivotX = -30;
+                _label.pivotY = -24;
+                _label.alpha = 1;
+                _label.touchable = false;
+                _label.visible = false;
+                addChild(_label);
+                nodeTagLables[1].push(_label);
+                _label = new TextField(60, 48, "captured", "Downlink12", -1, 16777215);
+                _label.vAlign = _label.hAlign = "center";
+                _label.pivotX = -30;
+                _label.pivotY = -24;
+                _label.alpha = 1;
+                _label.touchable = false;
+                _label.visible = false;
+                addChild(_label);
+                nodeTagLables[2].push(_label);
             }
         }
 
@@ -193,12 +209,15 @@ package Game
         {
             if (nodeTagLables.length == 0)
                 return;
-            for each (var _label:TextField in nodeTagLables)
+            for each (var _array:Array in nodeTagLables)
             {
-                _label.visible = false;
-                removeChild(_label);
+                for each (var _label:TextField in _array)
+                {
+                    _label.visible = false;
+                    removeChild(_label);
+                }
             }
-            nodeTagLables = [];
+            nodeTagLables = [[],[],[]];
         }
         // #endregion
         // #region 调试函数，手动触发
