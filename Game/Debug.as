@@ -18,8 +18,6 @@ package Game
         public var fpsCalculator:Array; // 帧率计算器
         public var debugLables:Array; // 调试显示文本
         public var nodeTagLables:Array; // 显示天体tag和战争占据状态
-        public var nodeConflictLables:Array; // 显示天体战争状态
-        public var nodeCaptureLables:Array; // 显示天体占据状态
         // #region 初始化
         public function Debug() // 构造函数
         {
@@ -31,9 +29,9 @@ package Game
             this.game = _gameScene;
             this.title = _titleMenu;
             this.debug = false;
+            fpsCalculator = [0, 0, 0, 0, 0, 0, 0];
             debugLables = [];
             nodeTagLables = [[],[],[]];
-            fpsCalculator = [0, 0, 0, 0, 0, 0, 0];
             addDebugView();
             addEventListener("enterFrame", update);
         }
@@ -134,7 +132,7 @@ package Game
             }
             else
             {
-                debugLables[1].text = title.optionsMenu.debug;
+                debugLables[1].text = "Not in game";
                 debugLables[2].text = "Not in game";
                 debugLables[3].text = "Not in game";
                 debugLables[4].text = "Not in game";
@@ -149,15 +147,15 @@ package Game
             {
                 nodeTagLables[0][_node.tag].x = _node.x - 30 * _node.size - 60;
                 nodeTagLables[0][_node.tag].y = _node.y - 50 * _node.size - 48;
-                nodeTagLables[1][_node.tag].x = _node.x;
-                nodeTagLables[1][_node.tag].y = _node.y - 50 * _node.size - 50;
-                nodeTagLables[2][_node.tag].x = _node.x;
-                nodeTagLables[2][_node.tag].y = _node.y - 50 * _node.size - 60;
-                if (_node.conflicted)
+                nodeTagLables[1][_node.tag].x = _node.x - 60;
+                nodeTagLables[1][_node.tag].y = _node.y + 50 * _node.size - 30;
+                nodeTagLables[2][_node.tag].x = _node.x - 60;
+                nodeTagLables[2][_node.tag].y = _node.y + 50 * _node.size - 30;
+                if (_node.conflict)
                     nodeTagLables[1][_node.tag].visible = true;
                 else
                     nodeTagLables[1][_node.tag].visible = false;
-                if (_node.captured)
+                if (_node.capturing)
                     nodeTagLables[2][_node.tag].visible = true;
                 else
                     nodeTagLables[2][_node.tag].visible = false;
@@ -181,10 +179,10 @@ package Game
                 _label.pivotY = -24;
                 _label.alpha = 1;
                 _label.touchable = false;
-                _label.visible = false;
+                _label.visible = true;
                 addChild(_label);
                 nodeTagLables[0].push(_label);
-                _label = new TextField(60, 48, "conflicted", "Downlink12", -1, 16777215);
+                _label = new TextField(60, 48, "conflict", "Downlink12", -1, 16777215);
                 _label.vAlign = _label.hAlign = "center";
                 _label.pivotX = -30;
                 _label.pivotY = -24;
@@ -193,7 +191,7 @@ package Game
                 _label.visible = false;
                 addChild(_label);
                 nodeTagLables[1].push(_label);
-                _label = new TextField(60, 48, "captured", "Downlink12", -1, 16777215);
+                _label = new TextField(60, 48, "capture", "Downlink12", -1, 16777215);
                 _label.vAlign = _label.hAlign = "center";
                 _label.pivotX = -30;
                 _label.pivotY = -24;
@@ -207,7 +205,7 @@ package Game
 
         public function clear_tag():void
         {
-            if (nodeTagLables.length == 0)
+            if (nodeTagLables[0].length == 0)
                 return;
             for each (var _array:Array in nodeTagLables)
             {
