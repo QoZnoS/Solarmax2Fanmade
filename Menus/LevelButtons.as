@@ -19,20 +19,7 @@ package Menus
          _startBtn.x = 0;
          addChild(_startBtn);
          buttons.push(_startBtn);
-         for (var i:int = 1; i <= LevelData.maps.length; i++)
-         {
-            var _levelText:String = (i < 10) ? ("0" + i.toString()) : i.toString();
-            var _buttonColor:int = getLevelColor(i);
-            var _levelBtn:TextField = new TextField(100, 40, _levelText, "Downlink16", -1, _buttonColor);
-            _levelBtn.pivotX = 50;
-            _levelBtn.pivotY = 20;
-            _levelBtn.alpha = 0.6;
-            _levelBtn.blendMode = "add";
-            _levelBtn.x = i * 120;
-            addChild(_levelBtn);
-            buttons.push(_levelBtn);
-         }
-         updateSize();
+         updateLevels();
       }
 
       private function getLevelColor(_difficulty:int):int
@@ -82,6 +69,25 @@ package Menus
 
       public function updateLevels():void
       {
+         for (var i:int = buttons.length - 1; i > 0; i--)
+         {
+            removeChild(buttons[i]);
+            buttons.pop();
+         }
+         for (var i:int = 1; i <= LevelData.maps.length; i++)
+         {
+            var _levelText:String = (i < 10) ? ("0" + i.toString()) : i.toString();
+            var _buttonColor:int = getLevelColor(i);
+            var _levelBtn:TextField = new TextField(100, 40, _levelText, "Downlink16", -1, _buttonColor);
+            _levelBtn.pivotX = 50;
+            _levelBtn.pivotY = 20;
+            _levelBtn.alpha = 0.6;
+            _levelBtn.blendMode = "add";
+            _levelBtn.x = i * 120;
+            addChild(_levelBtn);
+            buttons.push(_levelBtn);
+         }
+         updateSize();
       }
    }
 }
