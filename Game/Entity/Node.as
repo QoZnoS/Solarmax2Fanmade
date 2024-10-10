@@ -747,7 +747,7 @@ package Game.Entity
             changeTeam(captureTeam); // 中立天体占领度满时变为占领度势力
          if (team != 0 && hp == 0)
             changeTeam(0); // 非中立天体占领度空时变为中立
-         if (_capturing) // 占据状态下显示占领条
+         if (_capturing || hp != 100 && captureTeam == _captureTeam && team != 0) // 占据状态下显示占领条
          {
             var _ArcAngle:Number = -Math.PI / 2 - Math.PI * (hp / 100);
             drawCircle(x, y, Globals.teamColors[captureTeam], lineDist, lineDist - 2, false, 0.1);

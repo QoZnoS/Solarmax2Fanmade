@@ -11,23 +11,14 @@ package
    public class GS
    {
       public static var st:SoundTransform;
-
       public static var mt:SoundTransform;
-
       public static var mute:SoundTransform;
-
       public static var timers:Array = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
       public static var gap:Number = 0.1;
-
       public static var musicChannel:SoundChannel;
-
       public static var lastSong:String = "";
-
       public static var lastLoop:String = "";
-
       public static var lastPosition:Number = 0;
-
       public static var musicPaused:Boolean = false;
 
       public function GS()
@@ -235,7 +226,7 @@ package
          if (timers[0] > 0)
             return;
          timers[0] = gap;
-         playSound("explosion0" + (Math.random() * 8 + 1).toString(), 1, (_x - 512) / 512);
+         playSound("explosion0" + Math.floor(Math.random() * 8).toString(), 1, (_x - 512) / 512);
       }
 
       public static function playJumpCharge(_x:Number):void

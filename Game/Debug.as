@@ -89,7 +89,7 @@ package Game
                 case 81: // Q 启用 Debug 模式，已移至 Root.as 中
                     break;
                 case 87: // W 自由发挥
-                    set_orbit_node();
+                    game.addAI(1,4);
                     break;
                 case 69: // E 清空文本
                     clear_debug_trace();
@@ -157,6 +157,7 @@ package Game
                     nodeTagLables[1][_node.tag].visible = false;
                 if (_node.capturing)
                     nodeTagLables[2][_node.tag].visible = true;
+                    nodeTagLables[2][_node.tag].text = "RATE: " + _node.captureRate.toFixed(2);
                 else
                     nodeTagLables[2][_node.tag].visible = false;
             }
