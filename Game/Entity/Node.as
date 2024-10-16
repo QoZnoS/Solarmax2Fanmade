@@ -61,6 +61,7 @@ package Game.Entity
       public var transitShips:Array; // 
       public var oppNodeLinks:Array; // 
       public var nodeLinks:Array; // 
+      public var breadthFirstSearchNode:Node; // hardAI 寻路，标记父节点
       // 贴图相关变量
       public var glow:Image; // 光效图片
       public var image:Image; // 天体图片
@@ -747,7 +748,7 @@ package Game.Entity
             changeTeam(captureTeam); // 中立天体占领度满时变为占领度势力
          if (team != 0 && hp == 0)
             changeTeam(0); // 非中立天体占领度空时变为中立
-         if (_capturing) // 占据状态下显示占领条
+         if (_capturing || hp != 100 && captureTeam == _captureTeam && team != 0) // 占据状态下显示占领条
          {
             var _ArcAngle:Number = -Math.PI / 2 - Math.PI * (hp / 100);
             drawCircle(x, y, Globals.teamColors[captureTeam], lineDist, lineDist - 2, false, 0.1);
@@ -999,45 +1000,38 @@ package Game.Entity
       }
       // #endregion
       // #region hardAI 特制工具函数
-      public function getOppClose2Node(_team:int):Array // 返回将在 1.6 秒内着陆的[己方强度，最强方强度，最强方势力]
+      public function hard_getOppTransitShips(_team:int):int // 返回飞向自身的最强非己方飞船数
       {
-         // 众所周知飞船起飞有约 0.8~1 秒制动时长，这里取 1.6 秒以确保飞船能安全撤离
          var _ships:Array = [];
          for (var i:int = 0; i < Globals.teamCount; i++)
          {
             _ships.push([]);
          }
-         var _dx:Number = NaN;
-         var _dy:Number = NaN;
-         var _Distance:Number = NaN;
          for each (var _Ship:Ship in game.ships.active)
          {
-            if (_Ship.state == 0 || _Ship.node == this)
+            if (_Ship.state == 0 || _Ship.node != this)
                continue; // 排除未起飞的和不飞向自身的飞船
-            if (_Ship.warping)
-               _ships[_Ship.team].push(_Ship); // 记录使用传送门的飞船
-            else if (this.orbitNode) // 自身有轨道则需特殊处理
-            {
-               _dx = _Ship.x - this.x;
-               _dy = _Ship.y - this.y;
-               _Distance = Math.sqrt(_dx * _dx + _dy * _dy);
-               if (_Distance / _Ship.jumpSpeed < 1.6)
-                  _ships[_Ship.team].push(_Ship);
-            }
-            else if (_Ship.targetDist / _Ship.jumpSpeed < 1.6)
-               _ships[_Ship.team].push(_Ship);
+            _ships[_Ship.team].push(_Ship);
          }
-         var _maxStrength:int = 0;
-         var _maxTeam:int = 0;
+         var _maxShips:int = 0;
          for (var i:int = 0; i < Globals.teamCount; i++)
          {
-            if (_ships[i].length > _maxStrength)
-            {
-               _maxStrength = _ships[i].length;
-               _maxTeam = i;
-            }
+            if (i == _team)
+               continue; // 排除己方
+            _maxShips = Math.max(_maxShips, _ships[i].length); // 取最强的非己方飞船
          }
-         return [_ships[_team].length, _maxStrength, _maxTeam];
+         return _maxShips;
+      }
+
+      public function hard_teamStrength(_team:int):int // 返回指定势力的飞船数
+      {
+         var _Strength:int = 0;
+         for each (var _Ship:Ship in ships[_team])
+         {
+            if (_Ship.state == 0)
+               _Strength++;
+         }
+         return _Strength;
       }
       // #endregion
       // #region 一般计算工具函数

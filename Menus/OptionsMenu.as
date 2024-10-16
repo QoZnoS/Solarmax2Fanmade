@@ -437,6 +437,7 @@ package Menus
          LevelData.init();
          title.getBarrierData();
          title.getOrbitData();
+         title.levels.updateLevels();
          var _dataQuad:OptionButton;
          if (pages[1][1].length != 0)
          {
@@ -479,6 +480,7 @@ package Menus
          LevelData.init();
          title.getBarrierData();
          title.getOrbitData();
+         title.levels.updateLevels();
          animateOut();
       }
 

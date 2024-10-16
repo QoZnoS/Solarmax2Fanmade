@@ -144,7 +144,7 @@ package Game
          explosions = new EntityPool();
          darkPulses = new EntityPool();
          fades = new EntityPool();
-         entities = [ais, nodes, ships, warps, beams, pulses, flashes, barriers, explosions, darkPulses, fades]; // 实体池列表
+         entities = [ships, nodes, ais, warps, beams, pulses, flashes, barriers, explosions, darkPulses, fades]; // 实体池列表
          triggers = [false, false, false, false, false]; // 特殊事件
          barrierLines = []; // 障碍连接数据
          ui = new GameUI();

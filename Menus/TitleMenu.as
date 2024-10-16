@@ -508,7 +508,7 @@ package Menus
                levels.x += (_targetX - (levels.x - 512)) * 0.1;
             }
          }
-         var _minX:Number = 512 - levels.width + 100 + (36 - (Globals.levelReached + 1)) * 120;
+         var _minX:Number = 512 - levels.width + 100 + (LevelData.maps.length - (Math.min(Globals.levelReached, LevelData.maps.length - 1) + 1)) * 120;
          levels.x = Math.max(_minX, Math.min(512, levels.x));
          levels.update(_dt, hoverIndex);
          currentIndex = -Math.round((levels.x - 512) / 120);
@@ -540,18 +540,10 @@ package Menus
          if (currentIndex == 0) // 处理进游戏后的 SOLARMAX2 标题渐变
          {
             if (title.alpha < 0.5)
-            {
-               title.alpha += _dt * 0.5;
-               if (title.alpha >= 0.5)
-                  title.alpha = 0.5;
-            }
+               title.alpha = Math.min(0.5, title.alpha + _dt * 0.5);
          }
          else if (title.alpha > 0)
-         {
-            title.alpha -= _dt;
-            if (title.alpha < 0)
-               title.alpha = 0;
-         }
+            title.alpha = Math.max(0, title.alpha - _dt * 0.5);
          title_blur.alpha = title.alpha * 0.6;
          for each (var _text:TextField in credits)
          {
@@ -657,7 +649,7 @@ package Menus
                      loadMap();
                   else
                   {
-                     _level = Globals.levelReached;
+                     _level = Math.min(Globals.levelReached, LevelData.maps.length - 1);
                      if (downIndex <= _level + 1)
                         scrollTo(downIndex);
                   }
@@ -683,7 +675,7 @@ package Menus
 
       public function scrollToCurrent():void
       {
-         var _levelReached:int = Globals.levelReached;
+         var _levelReached:int = Math.min(Globals.levelReached, LevelData.maps.length - 1);
          if (_levelReached > 0)
          {
             scrollTo(_levelReached + 1, Globals.transitionSpeed);
