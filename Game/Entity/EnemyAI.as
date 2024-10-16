@@ -430,7 +430,8 @@ package Game.Entity
                      continue; // 出兵天体强度低于估损的一半时不派兵
                   // if (Globals.level == 34 && _targetNode.x == 912 && _targetNode.y == 544)
                   // trace("repositioning");
-                  traceDebug("repositioning   " + _senderNode.x + "." + _senderNode.y + "  to  " + _targetNode.x + "." + _targetNode.y + "  ships:  " + _Ships);
+                  if (_Ships != 0)
+                     traceDebug("repositioning   " + _senderNode.x + "." + _senderNode.y + "  to  " + _targetNode.x + "." + _targetNode.y + "  ships:  " + _Ships);
                   _senderNode.sendAIShips(team, _targetNode, _Ships);
                   return;
                }
@@ -686,29 +687,43 @@ package Game.Entity
       // #region 改版AI
       public function updateHard(_dt:Number):void
       {
-         attackBasic(_dt);
+         attackV1(_dt);
       }
 
-      public function attackBasic(_dt:Number):void // 出兵占领中立天体和弱小天体
+      public function attackV1(_dt:Number):void
       {
          var _Node:Node = null;
-         var _dx:Number = NaN;
-         var _dy:Number = NaN;
          var _Distance:Number = NaN;
          senders.length = 0;
          for each (_Node in game.nodes.active) // 计算出兵天体
          {
             if (!senderCheckBasic(_Node))
                continue;
-            if (_Node.conflict)
-               continue;
-            if (_Node.capturing) // 提前出兵
+            if (_Node.hard_oppAllStrength(team) != 0) // (预)战争状态
             {
-               if (_Node.team == 0 && (100 - _Node.hp) / _Node.captureRate < 0.5)
-                  senders.push(_Node);
+               if (_Node.hard_teamStrength(team) * 0.6 > _Node.hard_oppAllStrength(team))
+               {
+                  senders.push(_Node); // 己方过强时出兵（损失不到五分之一）
+                  _Node.senderType="overflow"; // 类型：兵力溢出
+               }
+               else if (_Node.hard_AllStrength(team) < _Node.hard_oppAllStrength(team))
+               {
+                  senders.push(_Node); // 己方过弱时出兵
+                  _Node.senderType="retreat"; // 类型：战术撤退
+               }
+               continue;
+            }
+            if (_Node.capturing)
+            {
+               if (_Node.team == 0 && (100 - _Node.hp) / _Node.captureRate < 0.5 && _Node.type != 1)
+               {
+                  senders.push(_Node); // 提前出兵
+                  _Node.senderType="attack"; // 类型：正常出兵
+               }
                continue;
             }
             senders.push(_Node);
+            _Node.senderType="attack"; // 类型：正常出兵
          }
          if (senders.length == 0)
             return;
@@ -717,11 +732,21 @@ package Game.Entity
          {
             if (!targetCheckBasic(_Node))
                continue;
-            if (_Node.conflict)
+            if (_Node.hard_oppAllStrength(team) != 0)// (预)战争状态
+            {
+               if (_Node.hard_teamStrength(team) * 0.866 < _Node.hard_oppAllStrength(team))
+               {
+                  targets.push(_Node); // 己方强度不足时作为目标（损失超过一半）
+                  _Node.targetType="lack"; // 类型：兵力不足
+               }
                continue;
-            if (_Node.team == team)
-               continue;
+            }
+            if (_Node.team == 0 && _Node.capturing && _Node.captureTeam == team && (100 - _Node.hp) / _Node.captureRate < _Node.aiValue / 50)
+               continue; // 不向快占完的天体派兵
+            if(_Node.team == team &&_Node.type != 1)
+               continue; // 除传送门不向己方天体派兵
             targets.push(_Node);
+            _Node.targetType="attack"; // 类型：正常目标
          }
          if (targets.length == 0)
             return;
@@ -735,19 +760,15 @@ package Game.Entity
             targets.sortOn("aiValue", 16);
             for each (var _targetNode:Node in targets) // 再派兵
             {
-               if (_targetNode.team == 0 && _targetNode.capturing && _targetNode.captureTeam == team && (100 - _targetNode.hp) / _targetNode.captureRate < _targetNode.aiValue / 50)
-                  continue; // 不向快占完的天体派兵
-               var _Ships:Number = _senderNode.hard_teamStrength(team);
-               if (15 < _targetNode.hard_teamStrength(team) + _targetNode.hard_getOppTransitShips(team))
-                  continue; // 目标较强时不派兵
                var _targetClose:Node = breadthFirstSearch(_senderNode, _targetNode);
                if (!_targetClose)
                   continue;
+               var _Ships:Number = _senderNode.hard_teamStrength(team);
                var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
                if (_towerAttack > 0 && _Ships < _towerAttack + 30)
                   continue; // 派出的兵力不超估损30兵时不派兵
                _senderNode.sendAIShips(team, _targetClose, _Ships);
-               traceDebug("attackBasic: " + _senderNode.tag + " -> " + _targetNode.tag + " ships: " + _Ships + " guessDieShips: " + _towerAttack);
+               traceDebug("attackV1: " + _senderNode.tag + " -> " + _targetNode.tag + " ships: " + _Ships + " guessDieShips: " + _towerAttack);
                return;
             }
          }

@@ -62,6 +62,8 @@ package Game.Entity
       public var oppNodeLinks:Array; // 
       public var nodeLinks:Array; // 
       public var breadthFirstSearchNode:Node; // hardAI 寻路，标记父节点
+      public var senderType:String; // hardAI 出兵动机
+      public var targetType:String; // hardAI 需求动机
       // 贴图相关变量
       public var glow:Image; // 光效图片
       public var image:Image; // 天体图片
@@ -1032,6 +1034,33 @@ package Game.Entity
                _Strength++;
          }
          return _Strength;
+      }
+
+      public function hard_AllStrength(_team:int):int // 返回自身综合强度
+      {
+         var _Strength:int = 0;
+         for each (var _Ship:Ship in game.ships.active)
+         {
+            if (_Ship.node == this && _Ship.team == _team)
+               _Strength++;
+         }
+         return _Strength;
+      }
+
+      public function hard_oppAllStrength(_team:int):int // 返回敌方综合强度
+      {
+         var _ships:Array = [];
+         for (var i:int = 0; i < Globals.teamCount; i++)
+         {
+            _ships.push([]);
+         }
+         for each (var _Ship:Ship in game.ships.active)
+         {
+            if (_Ship.node == this && _Ship.team != _team)
+               _ships[_Ship.team].push(_Ship);
+         }
+         _ships.sortOn("length", 16); // 按飞船数从小到大排序
+         return _ships[_ships.length - 1].length; // 取最强的非己方势力的飞船数
       }
       // #endregion
       // #region 一般计算工具函数
