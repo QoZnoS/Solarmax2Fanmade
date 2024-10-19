@@ -162,14 +162,14 @@ package Game
          _aiArray = nodeIn(); // 生成天体，同时返回需生成的ai
          for (i = 0; i < _aiArray.length; i++)
          {
-            if (Globals.currentDifficulty == 2)
+            if (Globals.currentDifficulty == 3)
                addAI(_aiArray[i], 4);
             else
-               addAI(_aiArray[i], Globals.currentDifficulty); // 为有天体的常规势力添加ai
+               addAI(_aiArray[i], Globals.currentDifficulty-1); // 为有天体的常规势力添加ai
          }
          if (Globals.level >= 35) // 为36关黑色设定ai
          {
-            if (Globals.currentDifficulty == 2)
+            if (Globals.currentDifficulty == 3)
                addAI(6, 4);
             else
                addAI(6, 3);
@@ -678,7 +678,7 @@ package Game
                   {
                      triggers[1] = true;
                      _boss.bossReady();
-                     if (Globals.currentDifficulty != 2)
+                     if (Globals.currentDifficulty != 3)
                      {
                         _bossParam = (Globals.level == 33) ? 320 : 350;
                         addShips(_boss, 6, _bossParam);
@@ -688,7 +688,7 @@ package Game
                         _bossParam = (Globals.level == 34) ? 400 : 350;
                         addShips(_boss, 6, _bossParam);
                      }
-                     _bossParam = (Globals.currentDifficulty == 2) ? 4 : 2;
+                     _bossParam = (Globals.currentDifficulty == 3) ? 4 : 2;
                      _boss.triggerTimer = 3;
                      GS.playSound("boss_ready", 1.5);
                   }
