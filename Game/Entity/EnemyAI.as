@@ -559,6 +559,8 @@ package Game.Entity
                _Node.aiValue = -_Node.oppNodeLinks.length; // 按路径数计算价值
                if (_Node.type == 1)
                   _Node.aiValue--; // 提高炮塔权重
+               if (Globals.level == 31 && _Node.type == 6)
+                  _Node.aiValue--; // 32关堡垒权重提高
                targets.push(_Node);
             }
             targets.sortOn("aiValue", 16);
@@ -688,14 +690,8 @@ package Game.Entity
       public function updateHard(_dt:Number):void
       {
          attackV1(_dt);
-         var _Ships:Number = 0;
-         for each (var _Ship:Ship in game.ships.active)
-         {
-            if (_Ship.team == team && _Ship.state != 0)
-               _Ships++;
-         }
-         if (_Ships > game.ships.active.length * 0.75)
-            actionDelay = 0.1; // 若有大量飞船在飞行中则停止行动
+         if (team == 6 && Globals.level == 35)
+            blackDefend(_dt);
       }
 
       public function attackV1(_dt:Number):void
@@ -707,7 +703,7 @@ package Game.Entity
          {
             if (!senderCheckBasic(_Node))
                continue;
-            if (_Node.hard_oppAllStrength(team) != 0) // (预)战争状态
+            if (_Node.hard_oppAllStrength(team) != 0 || _Node.conflict) // (预)战争状态
             {
                if (_Node.hard_teamStrength(team) * 0.6 > _Node.hard_oppAllStrength(team))
                {
@@ -718,7 +714,7 @@ package Game.Entity
                }
                else if (_Node.hard_AllStrength(team) < _Node.hard_oppAllStrength(team))
                {
-                  if(!_Node.hard_retreatCheck(team))
+                  if (!_Node.hard_retreatCheck(team))
                      continue; // 战术撤退时机检测
                   senders.push(_Node); // 己方过弱时出兵
                   _Node.senderType = "retreat"; // 类型：战术撤退
@@ -735,7 +731,7 @@ package Game.Entity
                continue;
             }
             senders.push(_Node);
-            _Node.senderType = "attack"; // 类型：正常出兵
+            _Node.senderType = "attackcom"; // 类型：正常出兵
          }
          if (senders.length == 0)
             return;
@@ -767,7 +763,18 @@ package Game.Entity
             for each (var _targetNode:Node in targets) // 先排序
             {
                _Distance = calcDistence(_senderNode, _targetNode) + Math.random() * 32;
-               _targetNode.aiValue = _Distance + _targetNode.hard_oppAllStrength(team);
+               _targetNode.aiValue = _Distance * 0.8 + _targetNode.hard_oppAllStrength(team);
+               if (_targetNode.attackRate != 0)
+                  _targetNode.aiValue += getTowerAIValue();
+               if (_targetNode.type == 6)
+                  _targetNode.aiValue -= Globals.teamCaps[0];
+               if (_targetNode.type == 1)
+                  _targetNode.aiValue += getWarpAIValue();
+               var _targetClose:Node = breadthFirstSearch(_senderNode, _targetNode);
+               if (!_targetClose)
+                  continue;
+               var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
+               _targetNode.aiValue += _towerAttack * 4; // 估损权重
             }
             targets.sortOn("aiValue", 16);
             for each (var _targetNode:Node in targets) // 再派兵
@@ -779,29 +786,43 @@ package Game.Entity
                   continue; // 避免传送门之间反复横跳
                var _Ships:Number = _senderNode.hard_teamStrength(team);
                if (_senderNode.senderType == "overflow")
+               {
+                  if (_senderNode.team != team)
+                     _Ships -= _senderNode.size * 200; // 尝试占领时减少派兵数量
                   _Ships -= Math.floor(_senderNode.hard_oppAllStrength(team) * 1.667); // 兵力溢出时减少派兵数量
+               }
                if (_targetNode.targetType == "lack")
-                  _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.5 - _targetNode.hard_AllStrength(team))); // 目标兵力不足时防止派兵过度
+               {
+                  if (_targetNode.team == team)
+                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.2 - _targetNode.hard_AllStrength(team))); // 目标兵力不足时防止派兵过度
+                  else if (team != 6)
+                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.6 - _targetNode.hard_AllStrength(team))); // 目标兵力不足时防止派兵过度
+                  else
+                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 2.4 - _targetNode.hard_AllStrength(team))); // 加强黑色分兵
+               }
                var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
                if (_towerAttack > 0 && _Ships < _towerAttack + 30)
                   continue; // 派出的兵力不超估损30兵时不派兵
                if (_Ships - _towerAttack < _targetNode.hard_oppAllStrength(team) - _targetNode.hard_teamStrength(team))
                   continue; // 己方兵力不足敌方时不派兵
                _senderNode.sendAIShips(team, _targetClose, _Ships);
-               traceDebug("attackV1: " + _senderNode.tag + " -> " + _targetNode.tag + " ships: " + _Ships + " guessDieShips: " + _towerAttack);
+               traceDebug("attackV1: " + _senderNode.senderType + " " + _senderNode.tag + " -> " + _targetNode.tag + " " + _targetNode.targetType + " ships: " + _Ships + " guessDieShips: " + _towerAttack);
                return;
             }
          }
       }
 
-      public function defendBasic(_dt:Number):void // 回防
+      public function blackDefend(_dt:Number):void // 回防
       {
-
-      }
-
-      public function repositionBasic(_dt:Number):void // 转移
-      {
-
+         var _boss:Node = game.nodes.active[0];
+         if (_boss.conflict || _boss.capturing)
+         {
+            for each (var _Node:Node in game.nodes.active)
+            {
+               if (_boss.hard_AllStrength(team) * 0.5 < _Node.hard_oppAllStrength(team))
+                  _Node.sendAIShips(team, _boss, _Node.hard_teamStrength(team)); // 回防
+            }
+         }
       }
 
       public function senderCheckBasic(_Node:Node):Boolean // 判断能否出兵
@@ -831,6 +852,28 @@ package Game.Entity
                return true;
          }
          return false;
+      }
+
+      public function getTowerAIValue():Number // 计算攻击天体价值
+      {
+         var _capValue:Number = 0;
+         for (var i:int = 1; i < Globals.teamCaps.length; i++)
+         {
+            _capValue += Globals.teamCaps[i];
+         }
+         return (Globals.teamCaps[0] - _capValue);
+      }
+
+      public function getWarpAIValue():Number // 计算传送价值
+      {
+         var _warpValue:Number = 0;
+         for each (var _Node:Node in game.nodes.active)
+         {
+            _warpValue += _Node.popVal;
+            if (_Node.team != 0 && _Node.team != team)
+               _warpValue -= _Node.attackRange * 3.5;
+         }
+         return _warpValue;
       }
 
       public function breadthFirstSearch(_startNode:Node, _targetNode:Node):Node // 广度优先搜索，寻路算法
@@ -906,7 +949,7 @@ package Game.Entity
                {
                   _distance += hard_distance(_current, _current.breadthFirstSearchNode);
                   if (_current.breadthFirstSearchNode == _startNode)
-                     return _current;
+                     return _distance;
                   _current = _current.breadthFirstSearchNode;
                }
             }
@@ -920,6 +963,56 @@ package Game.Entity
          {
             _Node.breadthFirstSearchNode = null;
          }
+      }
+
+      public function hard_getTowerAttack(_Node1:Node, _Node2:Node):Number // 高精度估损
+      {
+         var _Node:Node = null;
+         var _start:Point = null;
+         var _end:Point = null;
+         var _current:Point = null;
+         var _Length:Number = 0;
+         var _towerAttack:Number = 0;
+         if (_Node1.type == 1 && _Node1.team == team)
+            return 0; // 对传送门不执行该函数
+         for each (var _Node:Node in game.nodes.active)
+         {
+            _Length = 0;
+            if (_Node.team == 0 || _Node.team == team)
+               continue;
+            if (_Node.type == 4 || _Node.type == 6)
+            {
+               _start = new Point(_Node1.x, _Node1.y);
+               _end = new Point(_Node2.x, _Node2.y);
+               _current = new Point(_Node.x, _Node.y);
+               lineIntersectCircle(_start, _end, _current, _Node.attackRange);
+               if (resultIntersects)
+               {
+                  if (resultEnter && resultExit)
+                     _Length += Point.distance(resultEnter, resultExit);
+                  else if (resultEnter && !resultExit)
+                     _Length += Point.distance(resultEnter, _end);
+                  else if (!resultEnter && resultExit)
+                     _Length += Point.distance(_start, resultExit);
+                  else
+                     _Length += Point.distance(_start, _end);
+               }
+               else if (resultInside)
+                  _Length += Point.distance(_start, _end);
+               if (_Node.type == 4)
+                  _towerAttack += 0.1 * _Length;
+               else if (_Node.type == 6)
+                  _towerAttack += 0.133333333 * _Length;
+            }
+         }
+         return Math.floor(_towerAttack);
+      }
+
+      public function hard_distance(_Node1:Node, _Node2:Node):Number // 计算天体距离
+      {
+         var _dx:Number = _Node2.x - _Node1.x;
+         var _dy:Number = _Node2.y - _Node1.y;
+         return Math.sqrt(_dx * _dx + _dy * _dy);
       }
       // #endregion
       // #region 计算工具
@@ -1027,56 +1120,6 @@ package Game.Entity
                resultIntersects = true;
             }
          }
-      }
-
-      public function hard_getTowerAttack(_Node1:Node, _Node2:Node):Number // 高精度估损
-      {
-         var _Node:Node = null;
-         var _start:Point = null;
-         var _end:Point = null;
-         var _current:Point = null;
-         var _Length:Number = 0;
-         var _towerAttack:Number = 0;
-         if (_Node1.type == 1)
-            return 0; // 对传送门不执行该函数
-         for each (var _Node:Node in game.nodes.active)
-         {
-            _Length = 0;
-            if (_Node.team == 0 || _Node.team == team)
-               continue;
-            if (_Node.type == 4 || _Node.type == 6)
-            {
-               _start = new Point(_Node1.x, _Node1.y);
-               _end = new Point(_Node2.x, _Node2.y);
-               _current = new Point(_Node.x, _Node.y);
-               lineIntersectCircle(_start, _end, _current, _Node.attackRange);
-               if (resultIntersects)
-               {
-                  if (resultEnter && resultExit)
-                     _Length += Point.distance(resultEnter, resultExit);
-                  else if (resultEnter && !resultExit)
-                     _Length += Point.distance(resultEnter, _end);
-                  else if (!resultEnter && resultExit)
-                     _Length += Point.distance(_start, resultExit);
-                  else
-                     _Length += Point.distance(_start, _end);
-               }
-               else if (resultInside)
-                  _Length += Point.distance(_start, _end);
-               if (_Node.type == 4)
-                  _towerAttack += 0.1 * _Length;
-               else if (_Node.type == 6)
-                  _towerAttack += 0.133333333 * _Length;
-            }
-         }
-         return Math.floor(_towerAttack);
-      }
-
-      public function hard_distance(_Node1:Node, _Node2:Node):Number // 计算天体距离
-      {
-         var _dx:Number = _Node2.x - _Node1.x;
-         var _dy:Number = _Node2.y - _Node1.y;
-         return Math.sqrt(_dx * _dx + _dy * _dy);
       }
       // #endregion
       // #region 调试工具

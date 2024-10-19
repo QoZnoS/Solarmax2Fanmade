@@ -125,12 +125,12 @@ package Game
         {
             if (game.visible)
             {
-                debugLables[0].text = "FPS:" + Math.floor(fpsCalculator[6]) + " mouseXY: " + Math.floor(game.ui.debug_mouse_x) + "." + Math.floor(game.ui.debug_mouse_y);
-                debugLables[1].text = game.ais.active[1].debugTrace[0];
-                debugLables[2].text = game.ais.active[1].debugTrace[1];
-                debugLables[3].text = game.ais.active[1].debugTrace[2];
-                debugLables[4].text = game.ais.active[1].debugTrace[3];
-                debugLables[5].text = game.ais.active[1].debugTrace[4];
+                debugLables[0].text = "FPS:" + Math.floor(fpsCalculator[6]);
+                debugLables[1].text = game.ais.active[game.ais.active.length - 1].debugTrace[0];
+                debugLables[2].text = game.ais.active[game.ais.active.length - 1].debugTrace[1];
+                debugLables[3].text = game.ais.active[game.ais.active.length - 1].debugTrace[2];
+                debugLables[4].text = game.ais.active[game.ais.active.length - 1].debugTrace[3];
+                debugLables[5].text = game.ais.active[game.ais.active.length - 1].debugTrace[4];
             }
             else
             {

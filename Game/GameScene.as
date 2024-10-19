@@ -162,11 +162,17 @@ package Game
          _aiArray = nodeIn(); // 生成天体，同时返回需生成的ai
          for (i = 0; i < _aiArray.length; i++)
          {
-            addAI(_aiArray[i]); // 为有天体的常规势力添加ai
+            if (Globals.currentDifficulty == 2)
+               addAI(_aiArray[i], 4);
+            else
+               addAI(_aiArray[i], Globals.currentDifficulty); // 为有天体的常规势力添加ai
          }
          if (Globals.level >= 35) // 为36关黑色设定ai
          {
-            addAI(6, 3);
+            if (Globals.currentDifficulty == 2)
+               addAI(6, 4);
+            else
+               addAI(6, 3);
             bossTimer = 0;
          }
          for (i = 0; i < triggers.length; i++)
@@ -526,7 +532,7 @@ package Game
 
       public function countTeamCaps():void // 统计兵力
       {
-         for(var _team:int = 0; _team < Globals.teamCount; _team++) // 重置兵力
+         for (var _team:int = 0; _team < Globals.teamCount; _team++) // 重置兵力
          {
             Globals.teamCaps[_team] = 0;
             Globals.teamPops[_team] = 0;
@@ -561,6 +567,7 @@ package Game
          var _angle:Number;
          var _angleStep:Number;
          var _size:Number;
+         var _bossParam:int;
          switch (Globals.level) // 处理特殊关卡的特殊事件
          {
             case 0: // 前两关处理教程提示
@@ -671,11 +678,17 @@ package Game
                   {
                      triggers[1] = true;
                      _boss.bossReady();
-                     if (Globals.level == 33)
-                        addShips(_boss, 6, 320);
+                     if (Globals.currentDifficulty != 2)
+                     {
+                        _bossParam = (Globals.level == 33) ? 320 : 350;
+                        addShips(_boss, 6, _bossParam);
+                     }
                      else
-                        addShips(_boss, 6, 350);
-                     addAI(6, 2);
+                     {
+                        _bossParam = (Globals.level == 34) ? 400 : 350;
+                        addShips(_boss, 6, _bossParam);
+                     }
+                     _bossParam = (Globals.currentDifficulty == 2) ? 4 : 2;
                      _boss.triggerTimer = 3;
                      GS.playSound("boss_ready", 1.5);
                   }

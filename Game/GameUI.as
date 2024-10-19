@@ -49,6 +49,7 @@ package Game
 
       public var debug_mouse_x:Number;
       public var debug_mouse_y:Number;
+      public var debug_touch_Node:Node;
       // #endregion
       public function GameUI() // 构造函数，初始化对象
       {
@@ -292,6 +293,7 @@ package Game
             _Touch.hoverNode = getClosestNode(_Touch.globalX, _Touch.globalY);
             debug_mouse_x = _Touch.globalX;
             debug_mouse_y = _Touch.globalY;
+            debug_touch_Node = _Touch.hoverNode;
          }
       }
 
