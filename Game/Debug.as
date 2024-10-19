@@ -3,6 +3,7 @@
 package Game
 {
     import Game.Entity.Node;
+    import Game.Entity.EnemyAI;
     import Menus.TitleMenu;
     import starling.display.Sprite;
     import starling.events.EnterFrameEvent;
@@ -88,13 +89,14 @@ package Game
             {
                 case 81: // Q 启用 Debug 模式，已移至 Root.as 中
                     break;
-                case 87: // W 自由发挥
+                case 87: // W 添加 AI
                     game.addAI(1, 4);
                     break;
                 case 69: // E 清空文本
                     clear_debug_trace();
                     break;
-                case 82: // R
+                case 82: // R 替换 AI
+                    replace_AI();
                     break;
                 case 83: // S
                     break;
@@ -141,107 +143,115 @@ package Game
 
         public function update_in_game():void
         {
-            if (game.nodes.active.length != nodeTagLables[0].length) // 重置tag
+            if (game.nodes.active.length != nodeTagLables[0].length)
+                init_tag(); // 重置tag
+            for each (var _node:Node in game.nodes.active) // 更新tag位置
+            {
+                nodeTagLables[0][_node.tag].x = _node.x - 30 * _node.size - 60;
+                nodeTagLables[0][_node.tag].y = _node.y - 50 * _node.size - 48;
+                nodeTagLables[1][_node.tag].x = _node.x - 60;
+                nodeTagLables[1][_node.tag].y = _node.y + 50 * _node.size - 30;
+                nodeTagLables[2][_node.tag].x = _node.x - 60;
+                nodeTagLables[2][_node.tag].y = _node.y + 50 * _node.size - 30;
+                if (_node.conflict)
+                    nodeTagLables[1][_node.tag].visible = true;
+                else
+                    nodeTagLables[1][_node.tag].visible = false;
+                if (_node.capturing)
+                {
+                    nodeTagLables[2][_node.tag].visible = true;
+                    nodeTagLables[2][_node.tag].text = "RATE: " + _node.captureRate.toFixed(2);
+                }
+                else
+                    nodeTagLables[2][_node.tag].visible = false;
+            }
+        }
+
+        public function init_game():void // 进入游戏时触发一次
+        {
             init_tag();
-        for each (var _node:Node in game.nodes.active) // 更新tag位置
-        {
-            nodeTagLables[0][_node.tag].x = _node.x - 30 * _node.size - 60;
-            nodeTagLables[0][_node.tag].y = _node.y - 50 * _node.size - 48;
-            nodeTagLables[1][_node.tag].x = _node.x - 60;
-            nodeTagLables[1][_node.tag].y = _node.y + 50 * _node.size - 30;
-            nodeTagLables[2][_node.tag].x = _node.x - 60;
-            nodeTagLables[2][_node.tag].y = _node.y + 50 * _node.size - 30;
-            if (_node.conflict)
-                nodeTagLables[1][_node.tag].visible = true;
-            else
-                nodeTagLables[1][_node.tag].visible = false;
-            if (_node.capturing)
-            {
-                nodeTagLables[2][_node.tag].visible = true;
-                nodeTagLables[2][_node.tag].text = "RATE: " + _node.captureRate.toFixed(2);
-            }
-            else
-                nodeTagLables[2][_node.tag].visible = false;
         }
-    }
 
-    public function init_game():void // 进入游戏时触发一次
-    {
-        init_tag();
-    }
-
-    public function init_tag():void // 重置tag
-    {
-        clear_tag();
-        for each (var _node:Node in game.nodes.active)
+        public function init_tag():void // 重置tag
         {
-            _node.tag = game.nodes.active.indexOf(_node);
-            var _label:TextField = new TextField(60, 48, _node.tag, "Downlink12", -1, 16777215);
-            _label.vAlign = _label.hAlign = "center";
-            _label.pivotX = -30;
-            _label.pivotY = -24;
-            _label.alpha = 1;
-            _label.touchable = false;
-            _label.visible = true;
-            addChild(_label);
-            nodeTagLables[0].push(_label);
-            _label = new TextField(60, 48, "conflict", "Downlink12", -1, 16777215);
-            _label.vAlign = _label.hAlign = "center";
-            _label.pivotX = -30;
-            _label.pivotY = -24;
-            _label.alpha = 1;
-            _label.touchable = false;
-            _label.visible = false;
-            addChild(_label);
-            nodeTagLables[1].push(_label);
-            _label = new TextField(60, 48, "capture", "Downlink12", -1, 16777215);
-            _label.vAlign = _label.hAlign = "center";
-            _label.pivotX = -30;
-            _label.pivotY = -24;
-            _label.alpha = 1;
-            _label.touchable = false;
-            _label.visible = false;
-            addChild(_label);
-            nodeTagLables[2].push(_label);
-        }
-    }
-
-    public function clear_tag():void
-    {
-        if (nodeTagLables[0].length == 0)
-            return;
-        for each (var _array:Array in nodeTagLables)
-        {
-            for each (var _label:TextField in _array)
+            clear_tag();
+            for each (var _node:Node in game.nodes.active)
             {
+                _node.tag = game.nodes.active.indexOf(_node);
+                var _label:TextField = new TextField(60, 48, _node.tag, "Downlink12", -1, 16777215);
+                _label.vAlign = _label.hAlign = "center";
+                _label.pivotX = -30;
+                _label.pivotY = -24;
+                _label.alpha = 1;
+                _label.touchable = false;
+                _label.visible = true;
+                addChild(_label);
+                nodeTagLables[0].push(_label);
+                _label = new TextField(60, 48, "conflict", "Downlink12", -1, 16777215);
+                _label.vAlign = _label.hAlign = "center";
+                _label.pivotX = -30;
+                _label.pivotY = -24;
+                _label.alpha = 1;
+                _label.touchable = false;
                 _label.visible = false;
-                removeChild(_label);
+                addChild(_label);
+                nodeTagLables[1].push(_label);
+                _label = new TextField(60, 48, "capture", "Downlink12", -1, 16777215);
+                _label.vAlign = _label.hAlign = "center";
+                _label.pivotX = -30;
+                _label.pivotY = -24;
+                _label.alpha = 1;
+                _label.touchable = false;
+                _label.visible = false;
+                addChild(_label);
+                nodeTagLables[2].push(_label);
             }
         }
-        nodeTagLables = [[], [], []];
-    }
-    // #endregion
-    // #region 调试函数，手动触发
-    public function set_orbit_node():void
-    {
-        var _dx:Number = game.nodes.active[0].x - game.nodes.active[1].x;
-        var _dy:Number = game.nodes.active[0].y - game.nodes.active[1].y;
-        var _distance:Number = Math.sqrt(_dx * _dx + _dy * _dy);
-        var _angle:Number = Math.atan2(_dy, _dx);
-        game.nodes.active[0].orbitAngle = _angle;
-        game.nodes.active[0].orbitDist = _distance;
-        game.nodes.active[0].orbitSpeed = 0.1;
-        game.nodes.active[0].orbitNode = game.nodes.active[1];
-    }
 
-    public function clear_debug_trace():void
-    {
-        game.ais.active[0].debugTrace[0] = null;
-        game.ais.active[0].debugTrace[1] = null;
-        game.ais.active[0].debugTrace[2] = null;
-        game.ais.active[0].debugTrace[3] = null;
-        game.ais.active[0].debugTrace[4] = null;
+        public function clear_tag():void
+        {
+            if (nodeTagLables[0].length == 0)
+                return;
+            for each (var _array:Array in nodeTagLables)
+            {
+                for each (var _label:TextField in _array)
+                {
+                    _label.visible = false;
+                    removeChild(_label);
+                }
+            }
+            nodeTagLables = [[], [], []];
+        }
+        // #endregion
+        // #region 调试函数，手动触发
+        public function set_orbit_node():void
+        {
+            var _dx:Number = game.nodes.active[0].x - game.nodes.active[1].x;
+            var _dy:Number = game.nodes.active[0].y - game.nodes.active[1].y;
+            var _distance:Number = Math.sqrt(_dx * _dx + _dy * _dy);
+            var _angle:Number = Math.atan2(_dy, _dx);
+            game.nodes.active[0].orbitAngle = _angle;
+            game.nodes.active[0].orbitDist = _distance;
+            game.nodes.active[0].orbitSpeed = 0.1;
+            game.nodes.active[0].orbitNode = game.nodes.active[1];
+        }
+
+        public function clear_debug_trace():void
+        {
+            game.ais.active[0].debugTrace[0] = null;
+            game.ais.active[0].debugTrace[1] = null;
+            game.ais.active[0].debugTrace[2] = null;
+            game.ais.active[0].debugTrace[3] = null;
+            game.ais.active[0].debugTrace[4] = null;
+        }
+
+        public function replace_AI():void
+        {
+            for each (var _ai:EnemyAI in game.ais.active)
+            {
+                _ai.type = 4;
+            }
+        }
+        // #endregion
     }
-    // #endregion
-}
 }

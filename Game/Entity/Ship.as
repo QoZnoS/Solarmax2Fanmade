@@ -263,6 +263,7 @@ package Game.Entity
             _dx = tx - x;
             _dy = ty - y;
             _Distance = Math.sqrt(_dx * _dx + _dy * _dy);
+            targetDist = _Distance;
             _Angle = Math.atan2(_dy, _dx);
          }
          else

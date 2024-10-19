@@ -1062,6 +1062,26 @@ package Game.Entity
          _ships.sortOn("length", 16); // 按飞船数从小到大排序
          return _ships[_ships.length - 1].length; // 取最强的非己方势力的飞船数
       }
+
+      public function hard_retreatCheck(_team:int):Boolean // 检查撤退时机是否合理
+      {
+         var _ships:Array = [];
+         for (var i:int = 0; i < Globals.teamCount; i++)
+         {
+            _ships.push([]);
+         }
+         for each (var _Ship:Ship in game.ships.active)
+         {
+            if (_Ship.node != this || _Ship.team == _team)
+               continue; // 排除不飞向自身的飞船和己方飞船
+            if (_Ship.targetDist / _Ship.jumpSpeed < 1 || _Ship.state == 0)
+               _ships[_Ship.team].push(_Ship); // 记录一秒后抵达的和已经抵达的飞船数
+         }
+         _ships.sortOn("length", 16); // 按飞船数从小到大排序
+         if (_ships[_ships.length - 1].length > hard_AllStrength(_team))
+            return true;
+         return false;
+      }
       // #endregion
       // #region 一般计算工具函数
       public function getNodeLinks(_team:int):void // 计算指定势力可到达的天体
