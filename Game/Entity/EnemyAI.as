@@ -363,7 +363,7 @@ package Game.Entity
                      continue; // 总兵力不足估损时不派兵
                   if (Globals.level == 31)
                   {
-                     if (!(_towerAttack > 0 && _senderNode.teamStrength(team) < _towerAttack * 2))
+                     if (_towerAttack > 0 && _senderNode.teamStrength(team) < _towerAttack * 2)
                         break; // 32关兵力不足估损二倍时换个目标
                   }
                   if (_towerAttack > 0 && _senderNode.teamStrength(team) < _towerAttack * 0.5)
@@ -688,6 +688,14 @@ package Game.Entity
       public function updateHard(_dt:Number):void
       {
          attackV1(_dt);
+         var _Ships:Number = 0;
+         for each (var _Ship:Ship in game.ships.active)
+         {
+            if (_Ship.team == team && _Ship.state != 0)
+               _Ships++;
+         }
+         if (_Ships > game.ships.active.length * 0.75)
+            actionDelay = 0.1; // 若有大量飞船在飞行中则停止行动
       }
 
       public function attackV1(_dt:Number):void
@@ -703,13 +711,17 @@ package Game.Entity
             {
                if (_Node.hard_teamStrength(team) * 0.6 > _Node.hard_oppAllStrength(team))
                {
+                  if (_Node.team != team && _Node.hard_teamStrength(team) < _Node.size * 200)
+                     continue; // 保留占据兵力
                   senders.push(_Node); // 己方过强时出兵（损失不到五分之一）
-                  _Node.senderType="overflow"; // 类型：兵力溢出
+                  _Node.senderType = "overflow"; // 类型：兵力溢出
                }
                else if (_Node.hard_AllStrength(team) < _Node.hard_oppAllStrength(team))
                {
+                  if(!_Node.hard_retreatCheck(team))
+                     continue; // 战术撤退时机检测
                   senders.push(_Node); // 己方过弱时出兵
-                  _Node.senderType="retreat"; // 类型：战术撤退
+                  _Node.senderType = "retreat"; // 类型：战术撤退
                }
                continue;
             }
@@ -718,12 +730,12 @@ package Game.Entity
                if (_Node.team == 0 && (100 - _Node.hp) / _Node.captureRate < 0.5 && _Node.type != 1)
                {
                   senders.push(_Node); // 提前出兵
-                  _Node.senderType="attack"; // 类型：正常出兵
+                  _Node.senderType = "attack"; // 类型：正常出兵
                }
                continue;
             }
             senders.push(_Node);
-            _Node.senderType="attack"; // 类型：正常出兵
+            _Node.senderType = "attack"; // 类型：正常出兵
          }
          if (senders.length == 0)
             return;
@@ -732,21 +744,21 @@ package Game.Entity
          {
             if (!targetCheckBasic(_Node))
                continue;
-            if (_Node.hard_oppAllStrength(team) != 0)// (预)战争状态
+            if (_Node.hard_oppAllStrength(team) != 0) // (预)战争状态
             {
                if (_Node.hard_teamStrength(team) * 0.866 < _Node.hard_oppAllStrength(team))
                {
                   targets.push(_Node); // 己方强度不足时作为目标（损失超过一半）
-                  _Node.targetType="lack"; // 类型：兵力不足
+                  _Node.targetType = "lack"; // 类型：兵力不足
                }
                continue;
             }
             if (_Node.team == 0 && _Node.capturing && _Node.captureTeam == team && (100 - _Node.hp) / _Node.captureRate < _Node.aiValue / 50)
                continue; // 不向快占完的天体派兵
-            if(_Node.team == team &&_Node.type != 1)
+            if (_Node.team == team && _Node.type != 1)
                continue; // 除传送门不向己方天体派兵
             targets.push(_Node);
-            _Node.targetType="attack"; // 类型：正常目标
+            _Node.targetType = "attack"; // 类型：正常目标
          }
          if (targets.length == 0)
             return;
@@ -755,7 +767,7 @@ package Game.Entity
             for each (var _targetNode:Node in targets) // 先排序
             {
                _Distance = calcDistence(_senderNode, _targetNode) + Math.random() * 32;
-               _targetNode.aiValue = _Distance;
+               _targetNode.aiValue = _Distance + _targetNode.hard_oppAllStrength(team);
             }
             targets.sortOn("aiValue", 16);
             for each (var _targetNode:Node in targets) // 再派兵
@@ -763,10 +775,18 @@ package Game.Entity
                var _targetClose:Node = breadthFirstSearch(_senderNode, _targetNode);
                if (!_targetClose)
                   continue;
+               if (_targetClose.type == 1 && _senderNode.type == 1 && _senderNode.team == team)
+                  continue; // 避免传送门之间反复横跳
                var _Ships:Number = _senderNode.hard_teamStrength(team);
+               if (_senderNode.senderType == "overflow")
+                  _Ships -= Math.floor(_senderNode.hard_oppAllStrength(team) * 1.667); // 兵力溢出时减少派兵数量
+               if (_targetNode.targetType == "lack")
+                  _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.5 - _targetNode.hard_AllStrength(team))); // 目标兵力不足时防止派兵过度
                var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
                if (_towerAttack > 0 && _Ships < _towerAttack + 30)
                   continue; // 派出的兵力不超估损30兵时不派兵
+               if (_Ships - _towerAttack < _targetNode.hard_oppAllStrength(team) - _targetNode.hard_teamStrength(team))
+                  continue; // 己方兵力不足敌方时不派兵
                _senderNode.sendAIShips(team, _targetClose, _Ships);
                traceDebug("attackV1: " + _senderNode.tag + " -> " + _targetNode.tag + " ships: " + _Ships + " guessDieShips: " + _towerAttack);
                return;
@@ -1017,6 +1037,8 @@ package Game.Entity
          var _current:Point = null;
          var _Length:Number = 0;
          var _towerAttack:Number = 0;
+         if (_Node1.type == 1)
+            return 0; // 对传送门不执行该函数
          for each (var _Node:Node in game.nodes.active)
          {
             _Length = 0;
