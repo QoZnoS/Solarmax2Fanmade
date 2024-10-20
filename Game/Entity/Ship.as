@@ -114,6 +114,10 @@ package Game.Entity
 
       public function updateOrbit(_dt:Number):void // 围绕天体旋转
       {
+         if (jumpSpeed > 50 && team != 6 && team != 1)
+            jumpSpeed = 50;
+         if (jumpSpeed > 100 && (team == 6 || team == 1))
+            jumpSpeed = 100;
          if (image.alpha < 1 || pulse.scaleX > 0) // 生产飞船时的动画
          {
             image.alpha += _dt;
@@ -231,7 +235,7 @@ package Game.Entity
          var _x2:Number = NaN;
          var _y2:Number = NaN;
          jumpSpeed += 4 * _dt; // 飞船加速度
-         if (team == 6)
+         if (team == 6 || team == 1)
             jumpSpeed += 4 * _dt;
          if (node.orbitNode)
          {
@@ -386,9 +390,9 @@ package Game.Entity
          var _dy:Number = NaN;
          var _Distance:Number;
          // 依势力改变速度
-         if (jumpSpeed > 50 && team != 6)
+         if (jumpSpeed > 50 && team != 6 && team != 1)
             jumpSpeed = 50;
-         if (jumpSpeed > 100 && team == 6)
+         if (jumpSpeed > 100 && (team == 6 || team == 1))
             jumpSpeed = 100;
          this.node = _Node;
          orbitDist = (40 + Math.random() * 40) * node.size * 2;

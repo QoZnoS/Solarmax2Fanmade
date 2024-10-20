@@ -15,9 +15,9 @@ package
       public static var stageWidth:Number = 1920; // 画面宽度
       public static var stageHeight:Number = 1080; // 画面高度
       public static var device:String = "pc"; // 设备类型
-      public static var teamColors:Array = [13421772, 6272767, 16735635, 16747610, 13303662, 10066329, 0]; // 势力颜色
-      public static var teamCaps:Array = [0,0,0,0,0,0,0]; // 势力在关卡内的总飞船上限
-      public static var teamPops:Array = [0,0,0,0,0,0,0]; // 势力在关卡内的总飞船数
+      public static var teamColors:Array = [13421772, 0, 16735635, 16747610, 13303662, 10066329, 16777215, 6272767]; // 势力颜色
+      public static var teamCaps:Array = [0,0,0,0,0,0,0,0]; // 势力在关卡内的总飞船上限
+      public static var teamPops:Array = [0,0,0,0,0,0,0,0]; // 势力在关卡内的总飞船数
       public static var teamCount:int = 7; // 势力总数
 
       public static var file:File; // 文件

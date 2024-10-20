@@ -741,6 +741,10 @@ package Game.Entity
             default:
                break;
          }
+         if (captureTeam == 1)
+            captureRate *= 2; // 玩家的占领速度加倍
+         if (Globals.level == 22 && Globals.currentData == 1 && captureTeam == 1)
+            captureRate *= 50; // 23关更快占领速度
          captureRate = Math.min(captureRate, 100); // 防止占领速度超过100
          if (captureTeam == _captureTeam)
             hp = Math.min(hp + captureRate * _dt, 100); // 占领条同占据势力则增加占领度
@@ -767,8 +771,8 @@ package Game.Entity
 
       public function updateBuild(_dt:Number):void // 更新飞船生产
       {
-         if (team == 0 || Globals.teamPops[team] >= Globals.teamCaps[team] || capturing || conflict && ships[team].length == 0)
-            return; // 不产兵条件：中立/兵力到上限/被占据/战争状态没自己兵
+         if (team == 0 || Globals.teamPops[team] >= Globals.teamCaps[team] && team != 6 || capturing || conflict && ships[team].length == 0)
+            return; // 不产兵条件：中立/兵力到上限且不为白/被占据/战争状态没自己兵
          buildTimer -= buildRate * _dt; // 计算生产计时器
          if (buildTimer <= 0) // 计时结束时
          {
