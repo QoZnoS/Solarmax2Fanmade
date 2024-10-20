@@ -477,6 +477,7 @@ package Menus
       {
          var _index:int = pages[1][1].indexOf(_click.target);
          Globals.currentData = _index;
+         Globals.save();
          LevelData.init();
          title.getBarrierData();
          title.getOrbitData();

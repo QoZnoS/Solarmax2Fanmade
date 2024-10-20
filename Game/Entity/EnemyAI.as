@@ -690,7 +690,7 @@ package Game.Entity
       public function updateHard(_dt:Number):void
       {
          attackV1(_dt);
-         if (team == 6 && Globals.level == 35)
+         if (team == 6 && game.nodes.active[0].type == 5)
             blackDefend(_dt);
       }
 
@@ -819,7 +819,7 @@ package Game.Entity
          {
             for each (var _Node:Node in game.nodes.active)
             {
-               if (_boss.hard_AllStrength(team) * 0.5 < _Node.hard_oppAllStrength(team))
+               if (_boss.hard_AllStrength(team) * 0.5 < _boss.hard_oppAllStrength(team))
                   _Node.sendAIShips(team, _boss, _Node.hard_teamStrength(team)); // 回防
             }
          }

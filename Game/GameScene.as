@@ -165,7 +165,7 @@ package Game
             if (Globals.currentDifficulty == 3)
                addAI(_aiArray[i], 4);
             else
-               addAI(_aiArray[i], Globals.currentDifficulty-1); // 为有天体的常规势力添加ai
+               addAI(_aiArray[i], Globals.currentDifficulty - 1); // 为有天体的常规势力添加ai
          }
          if (Globals.level >= 35) // 为36关黑色设定ai
          {
@@ -231,7 +231,7 @@ package Game
                {
                   _Node.buildRate = 8;
                   _Node.popVal = 280;
-                  _Node.startVal = 150;
+                  _Node.startVal = Globals.currentDifficulty * 75;
                }
             }
             if (_NodeData.length >= 8) // 检验第八项数据(自定义兵力或障碍)
@@ -414,22 +414,21 @@ package Game
 
       public function next():void // 解锁下一关，执行animateOut()
       {
+         ui.deInit();
+         animateOut();
          if (Globals.levelData[Globals.level] < Globals.currentDifficulty)
-         {
             Globals.levelData[Globals.level] = Globals.currentDifficulty;
-         }
          if (Globals.levelReached < Globals.level + 1)
          {
             Globals.levelReached = Globals.level + 1;
+            Globals.save();
             dispatchEventWith("next");
          }
          else
          {
+            Globals.save();
             dispatchEventWith("menu");
          }
-         Globals.save();
-         ui.deInit();
-         animateOut();
       }
 
       public function animateOut():void // 关卡退出动画，执行hide()
@@ -689,6 +688,7 @@ package Game
                         addShips(_boss, 6, _bossParam);
                      }
                      _bossParam = (Globals.currentDifficulty == 3) ? 4 : 2;
+                     addAI(6, _bossParam);
                      _boss.triggerTimer = 3;
                      GS.playSound("boss_ready", 1.5);
                   }

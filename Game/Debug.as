@@ -98,7 +98,8 @@ package Game
                 case 82: // R 替换 AI
                     replace_AI();
                     break;
-                case 83: // S
+                case 83: // S 跳关
+                    game.next();
                     break;
                 default:
                     break;
