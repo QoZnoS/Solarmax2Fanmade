@@ -741,9 +741,9 @@ package Game.Entity
             default:
                break;
          }
-         if (captureTeam == 1)
+         if (_captureTeam == 1)
             captureRate *= 2; // 玩家的占领速度加倍
-         if (Globals.level == 22 && Globals.currentData == 1 && captureTeam == 1)
+         if (Globals.level == 22 && Globals.currentData == 1 && _captureTeam == 1)
             captureRate *= 50; // 23关更快占领速度
          captureRate = Math.min(captureRate, 100); // 防止占领速度超过100
          if (captureTeam == _captureTeam)
@@ -1093,7 +1093,7 @@ package Game.Entity
          nodeLinks.length = 0;
          for each (var _Node:Node in game.nodes.active)
          {
-            if (_Node == this)
+            if (_Node == this || _Node.type == 5 || _Node.type == 3)
                continue;
             if (nodesBlocked(this, _Node) == null || this.type == 1 && this.team == _team)
                nodeLinks.push(_Node);

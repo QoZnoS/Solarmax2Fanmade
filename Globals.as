@@ -18,7 +18,7 @@ package
       public static var teamColors:Array = [13421772, 0, 16735635, 16747610, 13303662, 10066329, 16777215, 6272767]; // 势力颜色
       public static var teamCaps:Array = [0,0,0,0,0,0,0,0]; // 势力在关卡内的总飞船上限
       public static var teamPops:Array = [0,0,0,0,0,0,0,0]; // 势力在关卡内的总飞船数
-      public static var teamCount:int = 7; // 势力总数
+      public static var teamCount:int = 8; // 势力总数
 
       public static var file:File; // 文件
       public static var fileStream:FileStream;

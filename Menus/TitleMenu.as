@@ -104,7 +104,7 @@ package Menus
          }
          levels = new LevelButtons();
          levels.x = title.x;
-         levels.y = title.y + 200;
+         levels.y = title.y + 232;
          addChild(levels);
          preview = new QuadBatch();
          preview.blendMode = "add";
@@ -148,13 +148,13 @@ package Menus
             difficultyButtons.push(_DBtn);
          }
          difficultyHolder.x = 412;
-         difficultyHolder.y = 150;
+         difficultyHolder.y = 126;
          addChild(difficultyHolder);
          starLabel = new TextField(120, 40, "0", "Downlink22", -1, 16755370);
          starLabel.hAlign = "right";
          starLabel.pivotX = 120;
          starLabel.pivotY = 20;
-         starLabel.y = 137;
+         starLabel.y = 113;
          starLabel.x = 974 - Globals.margin;
          starLabel.blendMode = "add";
          starLabel.alpha = 0.5;
@@ -162,19 +162,19 @@ package Menus
          starIcon = new Image(Root.assets.getTexture("star"));
          starIcon.pivotX = starIcon.width * 0.5;
          starIcon.pivotY = starIcon.height * 0.5;
-         starIcon.y = 136;
+         starIcon.y = 112;
          starIcon.x = 994 - Globals.margin;
          starIcon.alpha = 0.4;
          starIcon.blendMode = "add";
          addChild(starIcon);
          quitBtn = new MenuButton("btn_close");
          quitBtn.x = 15 + Globals.margin;
-         quitBtn.y = 124;
+         quitBtn.y = 100;
          quitBtn.blendMode = "add";
          addChild(quitBtn);
          menuBtn = new MenuButton("btn_menu");
          menuBtn.x = 50 + Globals.margin;
-         menuBtn.y = 124;
+         menuBtn.y = 100;
          menuBtn.blendMode = "add";
          addChild(menuBtn);
          optionsMenu = new OptionsMenu(this);

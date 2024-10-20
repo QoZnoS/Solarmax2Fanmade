@@ -689,6 +689,10 @@ package Game.Entity
       // #region 改版AI
       public function updateHard(_dt:Number):void
       {
+         for each (var _Node:Node in game.nodes.active)
+         {
+            _Node.getNodeLinks(team);
+         }
          attackV1(_dt);
          if (team == 6 && game.nodes.active[0].type == 5)
             blackDefend(_dt);
@@ -802,7 +806,7 @@ package Game.Entity
                }
                _Ships = Math.max(_Ships, ((hard_distance(_senderNode, _targetNode) * _targetNode.buildRate / 50) * 1.2 + 3));
                var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
-               if (_towerAttack > 0 && _Ships < _towerAttack + 30)
+               if (_towerAttack > 0 && _Ships < _towerAttack*0.5)
                   continue; // 派出的兵力不超估损30兵时不派兵
                if (_Ships - _towerAttack < _targetNode.hard_oppAllStrength(team) - _targetNode.hard_teamStrength(team))
                   continue; // 己方兵力不足敌方时不派兵
@@ -848,7 +852,6 @@ package Game.Entity
             return true;
          else
          {
-            _senderNode.getNodeLinks(team);
             if (_senderNode.nodeLinks.indexOf(_targetNode) != -1)
                return true;
          }
@@ -891,7 +894,6 @@ package Game.Entity
          while (_queue.length > 0)
          {
             var _current:Node = _queue.shift();
-            _current.getNodeLinks(team);
             for each (var _next:Node in _current.nodeLinks)
             {
                if (_visited.indexOf(_next) != -1)
@@ -931,7 +933,6 @@ package Game.Entity
          while (_queue.length > 0)
          {
             var _current:Node = _queue.shift();
-            _current.getNodeLinks(team);
             for each (var _next:Node in _current.nodeLinks)
             {
                if (_visited.indexOf(_next) != -1)

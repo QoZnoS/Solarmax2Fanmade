@@ -95,10 +95,10 @@ package
                      GS.init();
                      if(Globals.blackQuad)//新二代增加的黑边存在性判断
                      {
-                        var _loc2_:Quad = new Quad(1024,114,0);
+                        var _loc2_:Quad = new Quad(1024,90,0);
                         _loc2_.alpha = 0.4;
                         addChild(_loc2_);
-                        var _loc1_:Quad = new Quad(1024,114,0);
+                        var _loc1_:Quad = new Quad(1024,90,0);
                         _loc1_.y = 768 - _loc1_.height;
                         _loc1_.alpha = 0.4;
                         addChild(_loc1_);

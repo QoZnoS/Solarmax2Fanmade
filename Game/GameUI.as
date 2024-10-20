@@ -70,7 +70,7 @@ package Game
          popLabel.pivotY = 20;
          popLabel.alpha = 0.5;
          popLabel.x = 512;
-         popLabel.y = 136;
+         popLabel.y = 114;
          popLabel2 = new TextField(600, 40, "POPULATION : 50 / 50", "Downlink12", -1, _Color);
          popLabel2.vAlign = popLabel2.hAlign = "center";
          popLabel2.pivotX = 300;
@@ -90,26 +90,26 @@ package Game
          popLabel3.alpha = 0;
          sliderMedium = new FleetSlider(1);
          sliderMedium.x = 256;
-         sliderMedium.y = 640 - sliderMedium.height * 0.5;
+         sliderMedium.y = 664 - sliderMedium.height * 0.5;
          sliderLarge = new FleetSlider(2);
          sliderLarge.x = 192;
-         sliderLarge.y = 640 - sliderLarge.height * 0.5;
+         sliderLarge.y = 664 - sliderLarge.height * 0.5;
          closeBtn = new MenuButton("btn_close");
          closeBtn.x = 15 + Globals.margin;
-         closeBtn.y = 124;
+         closeBtn.y = 100;
          pauseBtn = new MenuButton("btn_pause");
          pauseBtn.x = closeBtn.x + closeBtn.width * 1.1;
-         pauseBtn.y = 124;
+         pauseBtn.y = 100;
          restartBtn = new MenuButton("btn_restart");
          restartBtn.x = pauseBtn.x + pauseBtn.width * 1.1;
-         restartBtn.y = 123;
+         restartBtn.y = 99;
          speedBtns = [];
          var _SpeedButton:SpeedButton = null;
          for (var i:int = 0; i < 3; i++) // 遍历三个速度按钮
          {
             _SpeedButton = new SpeedButton("btn_play" + (i + 1).toString(), speedBtns); // 输入的speedBtns为此按钮之前的速度按钮
             _SpeedButton.x = 870 + i * (pauseBtn.width - 2); // 计算x坐标
-            _SpeedButton.y = 124; // 设定y坐标
+            _SpeedButton.y = 100; // 设定y坐标
             if (i == 2)
                _SpeedButton.x -= 4;
             speedBtns.push(_SpeedButton);

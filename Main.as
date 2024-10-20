@@ -104,7 +104,7 @@ package
          else
          {
             stage.stageWidth = 1024;
-            stage.stageHeight = 640;
+            stage.stageHeight = 720;
             stage.displayState = "normal";
          }
          // 设置舞台尺寸的全局变量

@@ -66,9 +66,9 @@ package Game.Entity
          trailLength = 2;
          resetChargeRate();
          jumpDist = 0;
-         if (team != 6)
+         if (team != 6 && team != 1)
             jumpSpeed = 50;
-         else if (team == 6)
+         else if (team == 6 || team == 1)
             jumpSpeed = 100;
          hp = 100;
          state = 0; // 状态数
