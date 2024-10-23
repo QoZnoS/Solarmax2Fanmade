@@ -152,7 +152,6 @@ package Menus
          var _quality:int = 8 + pulseSize / 512 * 248;
          batch.reset();
          drawCircle(512, 384, Globals.teamColors[1], pulseSize, _model, true, _alpha, 1, 0, _quality);
-         batch.blendMode = "add";
       }
       // 画圆
       public function drawCircle(_x:Number, _y:Number, _Color:uint, _R:Number, _voidR:Number = 0, mTinted:Boolean = false, _alpha:Number = 1, _quality2:Number = 1, _angle:Number = 0, _quality1:int = 64):void

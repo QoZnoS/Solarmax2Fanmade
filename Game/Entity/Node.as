@@ -728,6 +728,8 @@ package Game.Entity
             }
          }
          captureRate = ships[_captureTeam].length / (size * 100) * 10;
+         if (captureRate == 0)
+            return; // 无需占领时不执行
          switch (type) // 按天体计算占领速度加权
          {
             case 4: // 炮塔

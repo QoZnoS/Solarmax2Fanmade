@@ -43,33 +43,28 @@ package Game.Entity
          image = new Image(Root.assets.getTexture("spot_glow"));
          image.pivotX = image.pivotY = image.width * 0.5;
          image.color = Globals.teamColors[1];
-         image.blendMode = "add";
          glare1 = new Image(Root.assets.getTexture("warp_glare"));
          glare1.pivotX = glare1.width * 0.5;
          glare1.pivotY = glare1.height * 0.5;
          glare1.color = Globals.teamColors[1];
          glare1.alpha = 0.6;
-         glare1.blendMode = "add";
          glare2 = new Image(Root.assets.getTexture("warp_glare"));
          glare2.pivotX = glare2.width * 0.5;
          glare2.pivotY = glare2.height * 0.5;
          glare2.color = Globals.teamColors[1];
          glare2.alpha = 0.6;
-         glare2.blendMode = "add";
          glare2.rotation = 1.5707963267948966;
          glare3 = new Image(Root.assets.getTexture("warp_glare"));
          glare3.pivotX = glare3.width * 0.5;
          glare3.pivotY = glare3.height * 0.5;
          glare3.color = Globals.teamColors[1];
          glare3.alpha = 0.4;
-         glare3.blendMode = "add";
          glare3.rotation = 0.7853981633974483;
          glare4 = new Image(Root.assets.getTexture("warp_glare"));
          glare4.pivotX = glare4.width * 0.5;
          glare4.pivotY = glare4.height * 0.5;
          glare4.color = Globals.teamColors[1];
          glare4.alpha = 0.4;
-         glare4.blendMode = "add";
          glare4.rotation = -0.7853981633974483;
       }
 
@@ -85,11 +80,11 @@ package Game.Entity
          image.x = glare1.x = glare2.x = glare3.x = glare4.x = _x;
          image.y = glare1.y = glare2.y = glare3.y = glare4.y = _y;
          image.scaleX = image.scaleY = glare1.scaleX = glare1.scaleY = glare2.scaleX = glare2.scaleY = glare3.scaleX = glare3.scaleY = glare4.scaleX = glare4.scaleY = 0;
-         _EndScene.addChild(glare1);
-         _EndScene.addChild(glare2);
-         _EndScene.addChild(glare3);
-         _EndScene.addChild(glare4);
-         _EndScene.addChild(image);
+         _EndScene.addChildAt(glare1, 0);
+         _EndScene.addChildAt(glare2, 0);
+         _EndScene.addChildAt(glare3, 0);
+         _EndScene.addChildAt(glare4, 0);
+         _EndScene.addChildAt(image, 0);
          state = 0;
       }
 

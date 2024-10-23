@@ -451,7 +451,7 @@ package Menus
          var _y:Number = 160;
          for each (var _data:Array in LevelData.data)
          {
-            _dataQuad = new OptionButton("MAPER: " + _data[1][0], COLOR, pages[1][1]);
+            _dataQuad = new OptionButton("MAPPER: " + _data[1][0], COLOR, pages[1][1]);
             _dataQuad.label.fontName = "Downlink18";
             _dataQuad.label.width = 700;
             _dataQuad.label.x += 40;

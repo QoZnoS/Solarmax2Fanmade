@@ -901,7 +901,7 @@ package Game.Entity
             var _current:Node = _queue.shift();
             for each (var _next:Node in _current.nodeLinks)
             {
-               if (_next.type == 5)
+               if (_next.type == 5 || _next.type == 3)
                   continue; // 星核不参与寻路
                if (_visited.indexOf(_next) != -1)
                   continue;

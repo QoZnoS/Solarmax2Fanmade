@@ -110,7 +110,6 @@ package Game
          // 通关时的遮罩
          cover = new Quad(1024, 768, 16777215);
          cover.touchable = false;
-         cover.blendMode = "add";
          cover.alpha = 0;
          addChild(cover);
          // 其他可视化对象
@@ -416,6 +415,8 @@ package Game
       {
          ui.deInit();
          animateOut();
+         if (!Globals.levelData[Globals.level])
+            Globals.levelData.push(0)
          if (Globals.levelData[Globals.level] < Globals.currentDifficulty)
             Globals.levelData[Globals.level] = Globals.currentDifficulty;
          if (Globals.levelReached < Globals.level + 1)
@@ -614,7 +615,7 @@ package Game
                      _boss.changeShipsTeam(6);
                      addAI(6, 2);
                      _boss.triggerTimer = 3;
-                     darkPulse.color = 0;
+                     darkPulse.color = 16777215;
                      darkPulse.blendMode = "normal";
                      darkPulse.scaleX = darkPulse.scaleY = 0;
                      darkPulse.visible = true;
@@ -703,6 +704,7 @@ package Game
                   _boss = nodes.active[0];
                   if (!triggers[0] && _boss.hp == 0) // 阶段一，坍缩动画
                   {
+                     ui.speedMult = 1;
                      triggers[0] = true;
                      _timer = 0;
                      _rate = 0.5;
@@ -800,8 +802,7 @@ package Game
                         gameOverTimer = 1;
                         slowMult = 1;
                         triggers[2] = true;
-                        darkPulse.color = Globals.teamColors[1];
-                        darkPulse.blendMode = "add";
+                        darkPulse.color = 0;
                         darkPulse.scaleX = darkPulse.scaleY = 0;
                         darkPulse.visible = true;
                         Starling.juggler.tween(gameContainer, 25, {
@@ -840,6 +841,8 @@ package Game
          var _Distance:Number = NaN;
          var _Ship:Ship = null;
          if (darkPulse.color == 0)
+            _team = 1;
+         if (darkPulse.color == 16777215)
             _team = 6;
          if (_team == 1)
             darkPulse.scaleX += _dt * 2;
@@ -855,7 +858,7 @@ package Game
          }
          for each (_Node in nodes.active)
          {
-            if (_Node.team == _team)
+            if (_Node.team == _team || _Node.type == 3)
                continue;
             _x = _Node.x - darkPulse.x;
             _y = _Node.y - darkPulse.y;
