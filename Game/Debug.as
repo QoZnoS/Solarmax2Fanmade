@@ -92,8 +92,8 @@ package Game
                 case 87: // W 添加 AI
                     game.addAI(1, 4);
                     break;
-                case 69: // E 清空文本
-                    clear_debug_trace();
+                case 69: // E 给鼠标所指天体加100飞船玩家
+                    game.addShips(game.ui.debug_touch_Node,1,100);
                     break;
                 case 82: // R 替换 AI
                     replace_AI();

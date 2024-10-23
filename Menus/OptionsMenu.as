@@ -76,24 +76,24 @@ package Menus
          // #region 左上角四个按钮
          quitBtn = new MenuButton("btn_close");
          quitBtn.x = 15 + Globals.margin;
-         quitBtn.y = 124;
+         quitBtn.y = 100;
          quitBtn.blendMode = "add";
          addChild(quitBtn);
          menuBtn = new MenuButton("btn_menu");
          menuBtn.x = 50 + Globals.margin;
-         menuBtn.y = 124;
+         menuBtn.y = 100;
          menuBtn.blendMode = "add";
          addChild(menuBtn);
          prevBtn = new MenuButton("tutorial_arrow");
          prevBtn.x = 120 + Globals.margin;
-         prevBtn.y = 146;
+         prevBtn.y = 122;
          prevBtn.image.rotation = Math.PI;
          prevBtn.blendMode = "add";
          prevBtn.setImage("tutorial_arrow", 0.75);
          addChild(prevBtn);
          nextBtn = new MenuButton("tutorial_arrow");
          nextBtn.x = 130 + Globals.margin;
-         nextBtn.y = 124;
+         nextBtn.y = 100;
          nextBtn.blendMode = "add";
          nextBtn.setImage("tutorial_arrow", 0.75);
          addChild(nextBtn);

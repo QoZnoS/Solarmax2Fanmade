@@ -1093,7 +1093,7 @@ package Game.Entity
          nodeLinks.length = 0;
          for each (var _Node:Node in game.nodes.active)
          {
-            if (_Node == this || _Node.type == 5 || _Node.type == 3)
+            if (_Node == this)
                continue;
             if (nodesBlocked(this, _Node) == null || this.type == 1 && this.team == _team)
                nodeLinks.push(_Node);

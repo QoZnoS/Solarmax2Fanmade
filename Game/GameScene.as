@@ -506,26 +506,8 @@ package Game
                slowMult = 0.1;
             _dt *= slowMult;
          }
-         if (ui.speedBtns[0].toggled) // 减速按钮
-         {
-            if (!(Globals.level == 31 && triggers[0]))
-            {
-               if (!(Globals.level == 35 && triggers[0]))
-               {
-                  _dt *= 0.5;
-               }
-            }
-         }
-         if (ui.speedBtns[2].toggled) // 加速按钮
-         {
-            if (!(Globals.level == 31 && triggers[0]))
-            {
-               if (!(Globals.level == 35 && triggers[0]))
-               {
-                  _dt *= 2;
-               }
-            }
-         }
+         else
+            _dt *= ui.speedMult;
          return _dt;
       }
 

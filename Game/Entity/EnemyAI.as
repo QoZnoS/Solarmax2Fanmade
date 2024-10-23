@@ -693,9 +693,9 @@ package Game.Entity
          {
             _Node.getNodeLinks(team);
          }
-         attackV1(_dt);
          if (team == 6 && game.nodes.active[0].type == 5)
             blackDefend(_dt);
+         attackV1(_dt);
       }
 
       public function attackV1(_dt:Number):void
@@ -806,7 +806,7 @@ package Game.Entity
                }
                _Ships = Math.max(_Ships, ((hard_distance(_senderNode, _targetNode) * _targetNode.buildRate / 50) * 1.2 + 3));
                var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
-               if (_towerAttack > 0 && _Ships < _towerAttack*0.5)
+               if (_towerAttack > 0 && _Ships < _towerAttack*1.2)
                   continue; // 派出的兵力不超估损30兵时不派兵
                if (_Ships - _towerAttack < _targetNode.hard_oppAllStrength(team) - _targetNode.hard_teamStrength(team))
                   continue; // 己方兵力不足敌方时不派兵
@@ -824,8 +824,13 @@ package Game.Entity
          {
             for each (var _Node:Node in game.nodes.active)
             {
+               if (!senderCheckBasic(_Node) || !moveCheckBasic(_Node, _boss))
+                  continue;
                if (_boss.hard_AllStrength(team) * 0.5 < _boss.hard_oppAllStrength(team))
+               {
                   _Node.sendAIShips(team, _boss, _Node.hard_teamStrength(team)); // 回防
+                  traceDebug("blackDefend: " + _Node.tag + " -> " + _boss.tag + " ships: " + _Node.hard_teamStrength(team));
+               }
             }
          }
       }
@@ -896,6 +901,8 @@ package Game.Entity
             var _current:Node = _queue.shift();
             for each (var _next:Node in _current.nodeLinks)
             {
+               if (_next.type == 5)
+                  continue; // 星核不参与寻路
                if (_visited.indexOf(_next) != -1)
                   continue;
                if (moveCheckBasic(_current, _next))

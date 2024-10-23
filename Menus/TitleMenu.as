@@ -452,7 +452,7 @@ package Menus
 
       public function nextLevel():void
       {
-         if (Globals.level == Globals.maps.length - 1)
+         if (Globals.level == LevelData.maps.length - 1)
             return;
          Starling.juggler.delayCall(function():void
             {
