@@ -15,11 +15,13 @@ package Game
       public var hitPoint:Point;
       public var buttonArray:Array;
       public var toggled:Boolean;
+      public var ui:GameUI;
 
-      public function SpeedButton(_Texture:String, _buttonArray:Array)
+      public function SpeedButton(_ui:GameUI, _Texture:String, _buttonArray:Array)
       {
          super();
          this.buttonArray = _buttonArray;
+         this.ui = _ui;
          image = new Image(Root.assets.getTexture(_Texture));
          image.color = 16755370;
          image.alpha = 0.3;
@@ -91,9 +93,54 @@ package Game
                      _SpeedBtn.toggled = false;
                   }
                   down = false;
+                  this.changeSpeed();
                   GS.playClick();
                   break;
                }
+         }
+      }
+
+      public function changeSpeed():void
+      {
+         switch (buttonArray.indexOf(this))
+         {
+            case 0:
+               if (ui.speedMult != 0.125)
+               {
+                  ui.speedMult *= 0.5;
+               }
+               break;
+            case 1:
+               ui.speedMult = 1;
+               break;
+            case 2:
+               if (ui.speedMult != 8)
+               {
+                  ui.speedMult *= 2;
+               }
+               break;
+         }
+         buttonArray[1].setImage("btn_speed" + ui.speedMult + "x", 0.75 + 0.6 * Globals.textSize);
+         buttonArray[1].x = buttonArray[2].x - buttonArray[1].width * 0.8;
+         buttonArray[1].image.alpha = 0.6;
+         if (ui.speedMult == 1)
+            buttonArray[1].x -= 9;
+         else if (ui.speedMult > 1)
+            buttonArray[1].x -= 7;
+         if (ui.speedMult > 0.125 && ui.speedMult < 8)
+         {
+            buttonArray[0].image.alpha = 0.3;
+            buttonArray[2].image.alpha = 0.3;
+         }
+         else if (ui.speedMult == 0.125)
+         {
+            buttonArray[0].image.alpha = 0.8;
+            buttonArray[2].image.alpha = 0.3;
+         }
+         else if (ui.speedMult == 8)
+         {
+            buttonArray[0].image.alpha = 0.3;
+            buttonArray[2].image.alpha = 0.8;
          }
       }
    }

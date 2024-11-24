@@ -1,5 +1,4 @@
 /* 计时器基本原理：取一个初始值，每帧为其减去这一帧的时间，计时归零时执行相应函数并重置计时器
-   需搞懂的机制：ai计时器，触发器
    需要的新功能：天体实时生成与摧毁
    
    ai计时器：具有同等于势力数的项数，每一项均为倒计时
@@ -22,6 +21,7 @@ package Game.Entity
 {
    import Game.GameScene;
    import flash.geom.Point;
+   import starling.animation.Transitions;
    import starling.display.Image;
    import starling.display.Quad;
    import starling.text.TextField;
@@ -40,10 +40,12 @@ package Game.Entity
       public var popVal:int; // 人口上限
       public var attackRange:Number; // 攻击半径
       public var attackRate:Number; // 攻击间隔
+      public var attackLast:Number; // 攻击持续时间
       public var buildRate:Number; // 生产速度，生产时间的倒数
       public var orbitNode:Node; // 轨道中心天体
       public var orbitDist:Number; // 轨道半径
       public var orbitSpeed:Number; // 轨道运转速度
+      public var hpMult:Number; // 占领难度倍率
       // 状态变量
       public var hp:Number; // 占领度，中立为0，被任意势力完全占领为100
       public var conflict:Boolean; // 战斗状态，判断天体上是否有战斗
@@ -52,11 +54,12 @@ package Game.Entity
       public var captureRate:Number; // 占领速度
       public var buildTimer:Number; // 生产计时器
       public var attackTimer:Number; // 攻击计时器
+      public var attacking:Boolean; // 攻击状态
       public var orbitAngle:Number; // 轨道旋转角度
       public var ships:Array; // 第一维储存的每个数组对应一个势力，第二维数组用于储存飞船的引用，一个值指代一个飞船，二维数组的长度表示该天体上该势力的飞船总数
       // AI相关变量
-      public var aiValue:Number; // ai价值（EnemyAI.as
-      public var aiStrength:Number; // ai强度（EnemyAI.as
+      public var aiValue:Number; // ai价值
+      public var aiStrength:Number; // ai强度
       public var aiTimers:Array; // ai计时器
       public var transitShips:Array; // 
       public var oppNodeLinks:Array; // 
@@ -131,11 +134,6 @@ package Game.Entity
          }
       }
       // #region 生成天体 移除天体
-      /* 生成天体initNode(来源，X，Y，类型，大小，势力，轨道中心天体tag，轨道方向，轨道速度)
-       类型：0星球，1传送门，2废稿，3障碍，4炮塔，5星核，6堡垒,7脉冲
-       势力：0中立，1蓝，2红，3橙，4绿，5灰（32关），6黑
-       轨道方向true为顺时针，false为逆时针
-       轨道速度默认0.1 */
       public function initNode(_GameScene:GameScene, _x:Number, _y:Number, _type:int, _size:Number, _team:int, _OrbitNode:Node = null, _Clockwise:Boolean = true, _OrbitSpeed:Number = 0.1):void
       {
          var i:int = 0;
@@ -174,6 +172,7 @@ package Game.Entity
          barrierCostom = false; // 默认不为自定义障碍
          linked = false; // 
          glowing = false; // 默认无光效
+         attacking = false; // 默认无攻击
          switch (_type) // 依类型修改天体参数
          {
             case 0: // 星球
@@ -187,6 +186,7 @@ package Game.Entity
                popVal = 100 * _size; // 设定人口上限为 100*大小
                buildRate = _size * 2; // 设定生产速度为 2*大小
                startVal = popVal; // 设定初始人口为人口上限
+               hpMult = 1;
                break;
             case 1: // 传送门
                image.texture = Root.assets.getTexture("warp");
@@ -195,14 +195,16 @@ package Game.Entity
                popVal = 0; // 不提供人口上限
                buildRate = 0; // 不产兵
                startVal = 100 * _size; // 提供100*大小的初始兵力
+               hpMult = 1;
                break;
-            case 2: // 废稿造船厂
+            case 2: // 造船厂
                image.texture = Root.assets.getTexture("habitat");
-               halo.texture = Root.assets.getTexture("halo"); // 原文为habitat_glow
-               glow.texture = Root.assets.getTexture("planet_shape"); // 原文为habitat_shape
+               halo.texture = Root.assets.getTexture("habitat_glow");
+               glow.texture = Root.assets.getTexture("habitat_shape");
                popVal = 0; // 不提供人口上限
                buildRate = 8; // 产兵速度相当于400人口星球，与36关星核相同
                startVal = 100 * _size; // 提供100*大小的初始兵力
+               hpMult = 1;
                break;
             case 3: // 障碍
                image.texture = Root.assets.getTexture("barrier");
@@ -212,6 +214,7 @@ package Game.Entity
                popVal = 0;
                buildRate = 0;
                startVal = 0;
+               hpMult = 0;
                break;
             case 4: // 炮塔
                image.texture = Root.assets.getTexture("tower");
@@ -222,6 +225,7 @@ package Game.Entity
                startVal = 100 * _size;
                attackRate = 0.2; // 攻击间隔为0.2
                attackRange = 180; // 攻击半径为180
+               hpMult = 2;
                break;
             case 5: // 星核，此处为白板天体
                image.texture = Root.assets.getTexture("dilator");
@@ -230,6 +234,7 @@ package Game.Entity
                popVal = 0;
                buildRate = 0;
                startVal = 0;
+               hpMult = 4;
                break;
             case 6: // 太空堡垒
                image.texture = Root.assets.getTexture("starbase");
@@ -240,16 +245,42 @@ package Game.Entity
                startVal = popVal;
                attackRate = 0.15; // 攻击间隔为0.15
                attackRange = 180; // 攻击范围为180
+               hpMult = 2;
                break;
             case 7: // 脉冲炮
                image.texture = Root.assets.getTexture("pulsecannon");
-               halo.texture = Root.assets.getTexture("tower_glow");
-               glow.texture = Root.assets.getTexture("tower_shape");
+               halo.texture = Root.assets.getTexture("pulsecannon_glow");
+               glow.texture = Root.assets.getTexture("pulsecannon_shape");
                popVal = 0;
                buildRate = 0;
                startVal = 0;
                attackRate = 5;
                attackRange = 180;
+               hpMult = 1;
+               break;
+            case 8: // 黑洞
+               image.texture = Root.assets.getTexture("blackhole");
+               halo.texture = Root.assets.getTexture("blackhole_glow");
+               glow.texture = Root.assets.getTexture("blackhole_shape");
+               popVal = 0;
+               buildRate = 0;
+               startVal = 0;
+               attackRate = 10;
+               attackLast = 5;
+               attackRange = 150;
+               hpMult = 1;
+               break;
+            case 9: // 航母
+               image.texture = Root.assets.getTexture("cloneturret");
+               halo.texture = Root.assets.getTexture("cloneturret_glow");
+               glow.texture = Root.assets.getTexture("cloneturret_shape");
+               popVal = 50;
+               buildRate = 0;
+               startVal = 0;
+               attackRate = 0.3;
+               attackRange = 180;
+               hpMult = 2;
+               break;
          }
          labelDist = 180 * _size; // 计算文本圈大小
          lineDist = 150 * _size; // 计算选中圈大小
@@ -260,13 +291,19 @@ package Game.Entity
          halo.readjustSize();
          halo.scaleY = halo.scaleX = 1; // 设定光圈缩放
          halo.pivotY = halo.pivotX = halo.width * 0.5;
-         switch (_type) // 处理贴图大小
+         switch (_type) // 修正贴图大小
          {
             case 0: // 星球
                halo.scaleY = halo.scaleX = _size * 0.5;
                break;
             case 7: // 脉冲
-               image.scaleX = image.scaleY = 0.8;
+               image.scaleX = image.scaleY = halo.scaleX = halo.scaleY = glow.scaleX = glow.scaleY = 0.8;
+               break;
+            case 8: // 黑洞
+               image.scaleX = image.scaleY = halo.scaleX = halo.scaleY = glow.scaleX = glow.scaleY = 0.7;
+               break;
+            case 9: // 航母
+               image.scaleX = image.scaleY = halo.scaleX = halo.scaleY = glow.scaleX = glow.scaleY = 1.2;
                break;
          }
          if (_OrbitNode) // 设定轨道，_OrbitNode：轨道中心天体
@@ -406,21 +443,13 @@ package Game.Entity
          var i:int = 0;
          game.nodeLayer.removeChild(image); // 移除贴图
          if (game.nodeGlowLayer.contains(halo))
-         {
             game.nodeGlowLayer.removeChild(halo);
-         }
          if (game.nodeGlowLayer2.contains(halo))
-         {
             game.nodeGlowLayer2.removeChild(halo);
-         }
          if (game.nodeGlowLayer.contains(glow))
-         {
             game.nodeGlowLayer.removeChild(glow);
-         }
          if (game.nodeGlowLayer2.contains(glow))
-         {
             game.nodeGlowLayer2.removeChild(glow);
-         }
          game.labelLayer.removeChild(label); // 移除和平时文本
          for (i = 0; i < labels.length; i++) // 循环移除和战斗时文本
          {
@@ -545,77 +574,194 @@ package Game.Entity
       {
          if (attackRate <= 0 || team == 0 && Globals.level != 31)
             return; // 排除32关以外的中立和无范围天体
-         if (attackTimer > 0) // 更新计时器
+         switch (type) // 适用于间断持续性攻击天体
          {
-            attackTimer -= _dt;
-            if (attackTimer > 0)
-               return; // 计时器未归零时不执行攻击代码
+            case 8: // 黑洞
+               attackBlackhole(_dt);
          }
-         var i:int = 0;
-         var j:int = 0;
-         var k:int = 0;
-         var _Ship:Ship = null;
-         var _ShipinRange:Array = null;
-         var _dx:Number = NaN;
-         var _dy:Number = NaN;
-         var _Node:Node = null;
+         attackTimer = Math.max(0, attackTimer - _dt);
+         if (attackTimer > 0)
+            return; // 计时器未归零时不执行攻击代码
          switch (type)
          {
             case 4: // 炮塔
             case 6: // 堡垒
-               _ShipinRange = []; // 记录攻击范围内的飞船
-               for each (_Ship in game.ships.active)
-               {
-                  if (_Ship.team == team || _Ship.state != 3)
-                     continue; // 该飞船在飞行中且不为己方飞船时
-                  _dx = _Ship.x - this.x; // 计算横坐标差
-                  _dy = _Ship.y - this.y; // 计算纵坐标差
-                  if (_dx > attackRange || _dx < -attackRange || _dy > attackRange || _dy < -attackRange)
-                     continue; // 矩形判断，减少计算量
-                  if (Math.sqrt(_dx * _dx + _dy * _dy) < attackRange)
-                     _ShipinRange.push(_Ship); // 判断遍历飞船是否在攻击范围内并记录飞船
-               }
-               if (_ShipinRange.length != 0) // 范围内有飞船时
-               {
-                  _Ship = _ShipinRange[Math.floor(Math.random() * _ShipinRange.length)]; // roll一个飞船
-                  _Ship.hp = 0; // 使其血量归零
-                  _Ship.destroy(); // 摧毁飞船
-                  game.addBeam(x, y, _Ship.x, _Ship.y, Globals.teamColors[team], type); // 播放攻击特效
-                  GS.playLaser(this.x); // 播放攻击音效
-                  attackTimer = attackRate; // 重置计时器
-               }
+               attackTower(_dt); // 炮塔攻击
                break;
             case 7: // 脉冲炮
-               for each (_Node in game.nodes.active)
+               attackPulsecannon(_dt); // 脉冲炮攻击
+               break;
+            case 8: // 黑洞
+               attacking = !attacking; // 切换攻击状态
+               attackTimer = attacking ? attackLast : attackRate; // 重置计时器
+               break;
+            case 9: // 航母
+               attackCloneTurret(_dt); // 克隆炮塔攻击
+               break;
+         }
+      }
+
+      private function attackTower(_dt:Number):void // 炮塔攻击
+      {
+         var _dx:Number;
+         var _dy:Number;
+         var _Ship:Ship;
+         var _ShipinRange:Array = []; // 记录攻击范围内的飞船
+         for each (_Ship in game.ships.active)
+         {
+            if (_Ship.team == team || _Ship.state != 3)
+               continue; // 该飞船在飞行中且不为己方飞船时
+            _dx = _Ship.x - this.x; // 计算横坐标差
+            _dy = _Ship.y - this.y; // 计算纵坐标差
+            if (_dx > attackRange || _dx < -attackRange || _dy > attackRange || _dy < -attackRange)
+               continue; // 矩形判断，减少计算量
+            if (Math.sqrt(_dx * _dx + _dy * _dy) < attackRange)
+               _ShipinRange.push(_Ship); // 判断遍历飞船是否在攻击范围内并记录飞船
+         }
+         if (_ShipinRange.length != 0) // 范围内有飞船时
+         {
+            _Ship = _ShipinRange[Math.floor(Math.random() * _ShipinRange.length)]; // roll一个飞船
+            _Ship.hp = 0; // 使其血量归零
+            _Ship.destroy(); // 摧毁飞船
+            game.addBeam(x, y, _Ship.x, _Ship.y, Globals.teamColors[team], type); // 播放攻击特效
+            GS.playLaser(this.x); // 播放攻击音效
+            attackTimer = attackRate; // 重置计时器
+         }
+      }
+
+      private function attackPulsecannon(_dt:Number):void // 脉冲炮攻击
+      {
+         var _Ship:Ship = null;
+         var _dx:Number = NaN;
+         var _dy:Number = NaN;
+         for each (var _Node:Node in game.nodes.active)
+         {
+            if (_Node == this)
+               continue; // 排除自身
+            _dx = _Node.x - this.x;
+            _dy = _Node.y - this.y;
+            if (_dx > attackRange || _dx < -attackRange || _dy > attackRange || _dy < -attackRange)
+               continue; // 先做矩形判断减少计算量
+            if (Math.sqrt(_dx * _dx + _dy * _dy) > attackRange)
+               continue; // 再做精确距离计算
+            for (var i:int = 0; i < Globals.teamCount; i++) // 遍历势力
+            {
+               _Ship = null;
+               if (i == team)
+                  continue; // 排除己方
+               for (var j:int = 0; j < 5 && _Node.ships[i].length > 0; j++)
                {
-                  if (_Node == this)
-                     continue; // 排除自身
-                  _dx = _Node.x - this.x;
-                  _dy = _Node.y - this.y;
-                  if (_dx > attackRange || _dx < -attackRange || _dy > attackRange || _dy < -attackRange)
-                     continue; // 先做矩形判断减少计算量
-                  if (Math.sqrt(_dx * _dx + _dy * _dy) > attackRange)
-                     continue; // 再做精确距离计算
-                  for (j = 0; j < Globals.teamCount; j++) // 遍历势力
-                  {
-                     _Ship = null;
-                     k = 0;
-                     while (k < 5 && _Node.ships[j].length > 0) // 挑5个飞船宰了
-                     {
-                        _Ship = _Node.ships[j][0];
-                        if (_Ship.team != this.team && _Ship.state == 0)
-                        {
-                           _Ship.hp = 0;
-                           _Ship.destroy();
-                           _Node.ships[j].shift();
-                           GS.playLaser(this.x); // 播放攻击音效
-                        }
-                        k++;
-                     }
-                  }
+                  _Ship = _Node.ships[i][0];
+                  if (_Ship.state != 0)
+                     continue; // 该飞船不为驻留状态时
+                  _Ship.hp = 0;
+                  _Ship.destroy();
+                  _Node.ships[i].shift();
+                  GS.playLaser(this.x); // 播放攻击音效
                }
-               game.addDarkPulse(this, Globals.teamColors[this.team], 3, 25, 50, 0); // 播放特效
-               attackTimer = attackRate; // 重置计时器
+            }
+         }
+         game.addDarkPulse(this, Globals.teamColors[this.team], 3, 25, 50, 0); // 播放特效
+         attackTimer = attackRate; // 重置计时器
+      }
+      private var blackhole_angle:Number = 0;
+      private function attackBlackhole(_dt:Number):void // 黑洞攻击
+      {
+         blackhole_angle += _dt * Math.PI * 0.5;
+         if (blackhole_angle > Math.PI * 2)
+            blackhole_angle -= Math.PI * 2;
+         if (attacking) // 控制特效
+         {
+            if (attackTimer > attackLast - 0.2)
+               game.addDarkPulse(this, Globals.teamColors[this.team], 4, 2.5, Transitions.getTransition("easeIn")(attackLast + 0.8 - attackTimer), blackhole_angle);
+            else if (attackTimer < 0.6)
+            {
+               game.addDarkPulse(this, Globals.teamColors[this.team], 4, 2.5, Transitions.getTransition("easeOut")(0.4 + attackTimer), blackhole_angle);
+               game.addDarkPulse(this, Globals.teamColors[this.team], 5, 1, Transitions.getTransition("easeIn")(0.6 - attackTimer), blackhole_angle);
+            }
+            else
+               game.addDarkPulse(this, Globals.teamColors[this.team], 4, 2.5, 1, blackhole_angle);
+            if (attackTimer < 1)
+            {
+               game.addDarkPulse(this, 0xFFFFFF, 7, Transitions.getTransition("easeOutBounce")(attackTimer)*2, 1, 0);
+               game.addDarkPulse(this, 0xFFFFFF, 6, 1 + Transitions.getTransition("easeOutBounce")(attackTimer) * 0.5, 1, 0);
+            }
+            else
+            {
+               game.addDarkPulse(this, 0xFFFFFF, 7, 2, 1, 0);
+               game.addDarkPulse(this, 0xFFFFFF, 6, 1.5, 1, 0);
+            }
+         }
+         else
+         {
+            if (attackTimer < 0.8)
+            {
+               game.addDarkPulse(this, Globals.teamColors[this.team], 4, 2.5, Transitions.getTransition("easeIn")(0.8 - attackTimer), blackhole_angle);
+            }
+            else if (attackTimer > attackRate - 0.4)
+            {
+               game.addDarkPulse(this, Globals.teamColors[this.team], 4, 2.5, Transitions.getTransition("easeOut")(0.4 + attackTimer - attackRate), blackhole_angle);
+               game.addDarkPulse(this, Globals.teamColors[this.team], 5, attackTimer / attackRate, Transitions.getTransition("easeIn")(0.6 - attackTimer + attackRate), blackhole_angle);
+            }
+            else
+               game.addDarkPulse(this, Globals.teamColors[this.team], 5, attackTimer / attackRate, 1, blackhole_angle);
+            if (attackTimer < 1)
+            {
+               game.addDarkPulse(this, 0xFFFFFF, 7, Transitions.getTransition("easeOutBounce")(1-attackTimer)*2, 1, 0);
+               game.addDarkPulse(this, 0xFFFFFF, 6, 1 + Transitions.getTransition("easeOutBounce")(attackTimer) * 0.5, 1, 0);
+            }
+            else
+               game.addDarkPulse(this, 0xFFFFFF, 6, 1, 1, 0);
+            return;
+         }
+         var _dx:Number;
+         var _dy:Number;
+         var _Ship:Ship;
+         for each (_Ship in game.ships.active)
+         {
+            if (_Ship.team == team || _Ship.state != 3)
+               continue; // 该飞船在飞行中且不为己方飞船时
+            _dx = _Ship.x - this.x; // 计算横坐标差
+            _dy = _Ship.y - this.y; // 计算纵坐标差
+            if (_dx > attackRange || _dx < -attackRange || _dy > attackRange || _dy < -attackRange)
+               continue; // 矩形判断，减少计算量
+            if (Math.sqrt(_dx * _dx + _dy * _dy) > attackRange)
+               continue; // 精确距离判断
+            _Ship.hp = 0; // 使其血量归零
+            _Ship.destroy(); // 摧毁飞船
+         }
+      }
+
+      private function attackCloneTurret(_dt:Number):void // 航母攻击
+      {
+         var _dx:Number;
+         var _dy:Number;
+         var _Ship:Ship;
+         var _ShipCreate:Ship;
+         var _ShipinRange:Array = []; // 记录攻击范围内的飞船
+         if (Globals.teamPops[team] >= Globals.teamCaps[team])
+            return; // 己方飞船已满时不执行
+         for each (_Ship in game.ships.active)
+         {
+            if (_Ship.team != team || _Ship.state != 3)
+               continue; // 该飞船在飞行中且为己方飞船时
+            _dx = _Ship.x - this.x; // 计算横坐标差
+            _dy = _Ship.y - this.y; // 计算纵坐标差
+            if (_dx > attackRange || _dx < -attackRange || _dy > attackRange || _dy < -attackRange)
+               continue; // 矩形判断，减少计算量
+            if (Math.sqrt(_dx * _dx + _dy * _dy) < attackRange)
+               _ShipinRange.push(_Ship); // 判断遍历飞船是否在攻击范围内并记录飞船
+         }
+         if (_ShipinRange.length != 0) // 范围内有飞船时
+         {
+            _Ship = _ShipinRange[Math.floor(Math.random() * _ShipinRange.length)]; // roll一个飞船
+            _ShipCreate = game.addShip(this,team,false); // 产生新飞船
+            _ShipCreate.x = this.x;
+            _ShipCreate.y = this.y;
+            _ShipCreate.followTo(_Ship); // 跟随原飞船
+            //game.addBeam(x, y, _Ship.x, _Ship.y, Globals.teamColors[team], type); // 播放攻击特效
+            GS.playJumpCharge(this.x);; // 播放攻击音效
+            attackTimer = attackRate; // 重置计时器
          }
       }
 
@@ -645,7 +791,7 @@ package Game.Entity
             if (_ShipTeam.length > 1)
                _conflict = true; // 该天体存在两种以上势力飞船时设为战争状态
          }
-         if (_conflict) // 在战斗状态下
+         if (_conflict) // 在战争状态下
          {
             _AttackArray = []; // 储存各飞船势力的消除量（能够消除的血量）
             for (i = 0; i < _ShipTeam.length; i++) // 计算各飞船势力的消除量
@@ -656,16 +802,16 @@ package Game.Entity
                   if (ships[_ShipTeam[i]][j].state == 0)
                      _ShipState0++;
                }
-               _Attack = _ShipState0 * 10 * _dt / (_ShipTeam.length - 1); // 计算该势力飞船的总攻击力，公式：10 * 帧时间 * 飞船数 /（飞船势力数-1）
+               _Attack = Globals.teamShipAttacks[_ShipTeam[i]] * _ShipState0 * 10 * _dt / (_ShipTeam.length - 1); // 计算该势力飞船的总攻击力，公式：10 * 帧时间 * 飞船数 * 势力攻击倍率/（飞船势力数-1）
                _AttackArray.push(_Attack); // 储存该势力飞船的总攻击力存
             }
-            for (i = 0; i < _ShipTeam.length; i++) // 让所有飞船势力被攻击一次
+            for (i = 0; i < _ShipTeam.length; i++) // 让所有势力被攻击一次
             {
                for (j = 0; j < _AttackArray.length; j++) // 消除所有攻击势力的消除量
                {
                   if (i == j)
                      continue; // 不对自身执行
-                  _Attack = Number(_AttackArray[j]); // 记录攻击势力的飞船消除量
+                  _Attack = Number(_AttackArray[j]) / Globals.teamShipDefences[_ShipTeam[i]]; // 记录攻击势力的飞船消除量
                   _DisAttack = ships[_ShipTeam[i]]; // 指向被攻击势力的全部飞船（该天体上
                   while (_Attack > 0 && _DisAttack.length > 0) // 执行对消直到消除量归零或被攻击方没有飞船
                   {
@@ -728,24 +874,24 @@ package Game.Entity
             }
          }
          captureRate = ships[_captureTeam].length / (size * 100) * 10;
-         switch (type) // 按天体计算占领速度加权
-         {
-            case 4: // 炮塔
-            case 6: // 堡垒
-               captureRate *= 0.5;
-               break;
-            case 5: // 星核
-               captureRate *= 0.25;
-               if (Globals.level > 31 && Globals.level < 35)
-                  captureRate = 0; // 禁止 33 34 35 星核被占领
-            default:
-               break;
-         }
+         captureRate /= hpMult * Globals.teamConstructionStrengths[team]; // 计算占领速度加权
+         if (Globals.level > 31 && Globals.level < 35 && type == 5)
+            captureRate = 0; // 禁止 33 34 35 星核被占领
          captureRate = Math.min(captureRate, 100); // 防止占领速度超过100
-         if (captureTeam == _captureTeam)
-            hp = Math.min(hp + captureRate * _dt, 100); // 占领条同占据势力则增加占领度
+         if (this.team == 0) // 特殊化中立占领度
+         {
+            if (captureTeam == _captureTeam)
+               hp = Math.min(hp + Globals.teamColonizingSpeeds[_captureTeam] * captureRate * _dt, 100); // 占领条同占据势力则增加占领度
+            else
+               hp = Math.max(0, hp - Globals.teamDecolonizingSpeeds[_captureTeam] * captureRate * _dt); // 否则减少占领度
+         }
          else
-            hp = Math.max(0, hp - captureRate * _dt); // 否则减少占领度
+         {
+            if (captureTeam == _captureTeam)
+               hp = Math.min(hp + Globals.teamRepairingSpeeds[_captureTeam] * captureRate * _dt, 100); // 占领条同占据势力则增加占领度
+            else
+               hp = Math.max(0, hp - Globals.teamDestroyingSpeeds[_captureTeam] * captureRate * _dt); // 否则减少占领度
+         }
          if (team == 0 && hp == 100)
             changeTeam(captureTeam); // 中立天体占领度满时变为占领度势力
          if (team != 0 && hp == 0)
@@ -769,10 +915,10 @@ package Game.Entity
       {
          if (team == 0 || Globals.teamPops[team] >= Globals.teamCaps[team] || capturing || conflict && ships[team].length == 0)
             return; // 不产兵条件：中立/兵力到上限/被占据/战争状态没自己兵
-         buildTimer -= buildRate * _dt; // 计算生产计时器
-         if (buildTimer <= 0) // 计时结束时
+         buildTimer -= buildRate * Globals.teamNodeBuilds[team] * _dt; // 计算生产计时器
+         while (buildTimer <= 0) // 计时结束时
          {
-            buildTimer = 1; // 重置倒计时
+            buildTimer += 1; // 重置倒计时
             game.addShip(this, team); // 生产飞船
          }
       }
@@ -782,8 +928,11 @@ package Game.Entity
       {
          if (Globals.level == 35 && type == 5)
             return; // 36关星核不做处理
+         this.attacking = false;
+         this.attackTimer = 0;
          var _Nodeteam:int = this.team;
          this.team = _team;
+         this.captureTeam = _team;
          glowing = true; // 激活光效
          glow.color = Globals.teamColors[_team]; // 设定光效颜色
          if (glow.color == 0)
@@ -1089,7 +1238,7 @@ package Game.Entity
          nodeLinks.length = 0;
          for each (var _Node:Node in game.nodes.active)
          {
-            if (_Node == this)
+            if (_Node == this || _Node.type == 3 || _Node.type == 5)
                continue;
             if (nodesBlocked(this, _Node) == null || this.type == 1 && this.team == _team)
                nodeLinks.push(_Node);

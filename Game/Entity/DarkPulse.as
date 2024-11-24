@@ -8,31 +8,22 @@ package Game.Entity
 
    public class DarkPulse extends GameEntity
    {
-
       public static const TYPE_GROW:int = 0;
-
       public static const TYPE_SHRINK:int = 1;
-
       public static const TYPE_BLOB:int = 2;
-
       public static const TYPE_BLOOM:int = 3;
+      public static const TYPE_BLACKHOLE_ATTACK:int = 4;
+      public static const TYPE_BLACKHOLE:int = 5;
+      public static const TYPE_BLACKHOLE_FLARE:int = 6;
 
       public var x:Number;
-
       public var y:Number;
-
       public var size:Number;
-
       public var maxSize:Number;
-
       public var delay:Number;
-
       public var rate:Number;
-
       public var angle:Number;
-
       public var image:Image;
-
       public var type:int;
 
       public function DarkPulse()
@@ -55,6 +46,16 @@ package Game.Entity
             case 2:
             case 3:
                image.texture = Root.assets.getTexture("spot_glow");
+               break;
+            case 4:
+            case 5:
+               image.texture = Root.assets.getTexture("blackhole_pulse");
+               break;
+            case 6:
+               image.texture = Root.assets.getTexture("skill_light");
+               break;
+            case 7:
+               image.texture = Root.assets.getTexture("skill_glow");
          }
          image.readjustSize();
          image.width = image.texture.width;
@@ -69,6 +70,10 @@ package Game.Entity
          this.rate = _rate;
          this.angle = _angle;
          this.delay = _delay;
+         image.x = x;
+         image.y = y;
+         image.color = _Color;
+         image.visible = true;
          switch (_type)
          {
             case 0:
@@ -90,12 +95,18 @@ package Game.Entity
                size = 0;
                image.alpha = 1;
                image.scaleX = image.scaleY = size;
+               break;
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+               image.alpha = _rate;
+               image.scaleX = image.scaleY = _maxSize;
+               image.rotation = angle;
          }
-         image.x = x;
-         image.y = y;
-         image.color = _Color;
-         image.visible = true;
-         if (image.color == 0)
+         if (_type == 4)
+            _GameScene.blackholePulseLayer.addChild(image);
+         else if (image.color == 0)
             _GameScene.nodeGlowLayer2.addChild(image);
          else
             _GameScene.nodeGlowLayer.addChild(image);
@@ -107,11 +118,12 @@ package Game.Entity
             game.nodeGlowLayer.removeChild(image);
          if (game.nodeGlowLayer2.contains(image))
             game.nodeGlowLayer2.removeChild(image);
+         if (game.blackholePulseLayer.contains(image))
+            game.blackholePulseLayer.removeChild(image);
       }
 
       override public function update(_dt:Number):void
       {
-         image.rotation = 0;
          if (delay > 0)
          {
             image.visible = false;
@@ -120,53 +132,87 @@ package Game.Entity
                image.visible = true;
             return;
          }
-         var _scale:Number = size / maxSize;
          switch (type)
          {
             case 0: // 使用halo，贴图大小递增
-               size += _dt * rate;
-               if (size > maxSize)
-               {
-                  size = maxSize;
-                  active = false;
-               }
-               image.alpha = 1 - _scale;
-               image.scaleY = size * _scale;
-               image.scaleX = maxSize * 0.5;
-               image.rotation = angle;
+               updateGrow(_dt);
                break;
             case 1: // 使用halo，贴图大小递减
-               size -= _dt * rate;
-               if (size < 0)
-               {
-                  size = 0;
-                  active = false;
-               }
-               image.alpha = 1 - _scale;
-               image.scaleY = size * _scale;
-               image.scaleX = maxSize * 0.5;
-               image.rotation = angle;
+               updateShrink(_dt);
                break;
             case 2: // 使用spot_glow，贴图大小递减
-               size -= _dt * rate;
-               if (size < 0)
-               {
-                  size = 0;
-                  active = false;
-               }
-               image.alpha = 1 - _scale;
-               image.scaleX = image.scaleY = size * 6;
+               updateBlob(_dt);
                break;
             case 3: // 使用spot_glow，贴图大小递增
-               size += _dt * rate;
-               if (size > maxSize)
-               {
-                  size = maxSize;
-                  active = false;
-               }
-               image.alpha = 1 - _scale;
-               image.scaleX = image.scaleY = size;
+               updateBloom(_dt);
+               break;
+            case 4: // 只播放一帧的特效
+            case 5:
+            case 6:
+            case 7:
+               updateFrame(_dt);
          }
+      }
+
+      private function updateGrow(_dt:Number):void
+      {
+         var _scale:Number = size / maxSize;
+         size += _dt * rate;
+         if (size > maxSize)
+         {
+            size = maxSize;
+            active = false;
+         }
+         image.alpha = 1 - _scale;
+         image.scaleY = size * _scale;
+         image.scaleX = maxSize * 0.5;
+         image.rotation = angle;
+      }
+
+      private function updateShrink(_dt:Number):void
+      {
+         var _scale:Number = size / maxSize;
+         size -= _dt * rate;
+         if (size < 0)
+         {
+            size = 0;
+            active = false;
+         }
+         image.alpha = 1 - _scale;
+         image.scaleY = size * _scale;
+         image.scaleX = maxSize * 0.5;
+         image.rotation = angle;
+      }
+
+      private function updateBlob(_dt:Number):void
+      {
+         var _scale:Number = size / maxSize;
+         size -= _dt * rate;
+         if (size < 0)
+         {
+            size = 0;
+            active = false;
+         }
+         image.alpha = 1 - _scale;
+         image.scaleX = image.scaleY = size * 6;
+      }
+
+      private function updateBloom(_dt:Number):void
+      {
+         var _scale:Number = size / maxSize;
+         size += _dt * rate;
+         if (size > maxSize)
+         {
+            size = maxSize;
+            active = false;
+         }
+         image.alpha = 1 - _scale;
+         image.scaleX = image.scaleY = size;
+      }
+
+      private function updateFrame(_dt:Number):void
+      {
+         active = false;
       }
    }
 }
