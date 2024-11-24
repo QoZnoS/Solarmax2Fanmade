@@ -3,6 +3,7 @@
 */
 package Game
 {
+   import Game.Entity.ASF;
    import Game.Entity.BarrierFX;
    import Game.Entity.BeamFX;
    import Game.Entity.DarkPulse;
@@ -52,6 +53,7 @@ package Game
       public var ais:EntityPool; //AI
       public var nodes:EntityPool; // 天体
       public var ships:EntityPool; // 飞船
+      public var asfs:EntityPool;
       public var warps:EntityPool; // 传送门特效
       public var beams:EntityPool; // 攻击塔射线
       public var pulses:EntityPool; // 波
@@ -140,6 +142,7 @@ package Game
          ais = new EntityPool();
          nodes = new EntityPool();
          ships = new EntityPool();
+         asfs = new EntityPool();
          warps = new EntityPool();
          beams = new EntityPool();
          pulses = new EntityPool();
@@ -148,7 +151,7 @@ package Game
          explosions = new EntityPool();
          darkPulses = new EntityPool();
          fades = new EntityPool();
-         entities = [ships, nodes, ais, warps, beams, pulses, flashes, barriers, explosions, darkPulses, fades]; // 实体池列表
+         entities = [ships, nodes, ais, asfs, warps, beams, pulses, flashes, barriers, explosions, darkPulses, fades]; // 实体池列表
          triggers = [false, false, false, false, false]; // 特殊事件
          barrierLines = []; // 障碍连接数据
          ui = new GameUI();
@@ -1076,6 +1079,15 @@ package Game
       }
       // #endregion
       // #region 添加特效
+      public function addASF():void
+      {
+         var _ASF:ASF;
+         if (!(_ASF = asfs.getReserve() as ASF))
+            _ASF = new ASF();
+         _ASF.initASF(this);
+         asfs.addEntity(_ASF);
+      }
+
       public function addWarp(_GameScene:Number, _x:Number, _y:Number, _prevX:Number, _prevY:uint, _foreground:Boolean):void
       {
          var _warp:WarpFX;
