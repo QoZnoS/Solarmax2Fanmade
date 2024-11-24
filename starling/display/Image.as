@@ -20,6 +20,8 @@ package starling.display
       private var mVertexDataCache:VertexData;
       
       private var mVertexDataCacheInvalid:Boolean;
+
+      public var team:int;
       
       public function Image(param1:Texture)
       {
