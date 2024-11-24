@@ -18,7 +18,17 @@ package
       public static var teamColors:Array = [13421772, 6272767, 16735635, 16747610, 13303662, 10066329, 0]; // 势力颜色
       public static var teamCaps:Array = [0,0,0,0,0,0,0]; // 势力在关卡内的总飞船上限
       public static var teamPops:Array = [0,0,0,0,0,0,0]; // 势力在关卡内的总飞船数
-      public static var teamCount:int = 7; // 势力总数
+      public static var teamShipSpeeds:Array = [50,50,50,50,50,50,100]; // 基础飞船速度
+      public static var teamShipAttacks:Array = [1,1,1,1,1,1,1]; // 飞船攻击倍率
+      public static var teamShipDefences:Array = [1,1,1,1,1,1,1]; // 飞船伤害抗性
+      public static var teamRepairingSpeeds:Array = [1,1,1,1,1,1,1]; // 修复速度倍率
+      public static var teamColonizingSpeeds:Array = [1,1,1,1,1,1,1]; // 建造速度倍率
+      public static var teamDestroyingSpeeds:Array = [1,1,1,1,1,1,1]; // 摧毁速度倍率
+      public static var teamDecolonizingSpeeds:Array = [1,1,1,1,1,1,1]; // 中立破坏速度倍率
+      public static var teamConstructionStrengths:Array = [1,1,1,1,1,1,1]; // 基地强度
+      public static var teamNodeBuilds:Array = [1,1,1,1,1,1,1]; // 生产速度倍率
+      public static var teamNodePops:Array = [1,1,1,1,1,1,1]; // 飞船上限倍率
+      public static var teamCount:int = 7; // 势力数上限
 
       public static var file:File; // 文件
       public static var fileStream:FileStream;
@@ -54,7 +64,13 @@ package
 
       public static function init():void 
       {
-         trace("I'm alive!"); // 输出到控制台，游戏内看不到
+         teamCaps = new Array(teamCount);
+         teamPops = new Array(teamCount);
+         for (var i:int = 0; i < teamCount; i++)
+         {
+            teamCaps[i] = 0;
+            teamPops[i] = 0;
+         }
       }
 
       public static function load():void // 加载存档文件
