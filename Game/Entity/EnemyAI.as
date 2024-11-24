@@ -794,12 +794,13 @@ package Game.Entity
                if (_targetNode.targetType == "lack")
                {
                   if (_targetNode.team == team)
-                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.2 - _targetNode.hard_AllStrength(team))); // 目标兵力不足时防止派兵过度
+                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.2 - _targetNode.hard_AllStrength(team)) + 4); // 目标兵力不足时防止派兵过度
                   else if (team != 6)
                      _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 1.6 - _targetNode.hard_AllStrength(team))); // 目标兵力不足时防止派兵过度
                   else
-                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 2.4 - _targetNode.hard_AllStrength(team))); // 加强黑色分兵
+                     _Ships = Math.min(_Ships, Math.floor(_targetNode.hard_oppAllStrength(team) * 2.4 - _targetNode.hard_AllStrength(team)) + 4); // 加强黑色分兵
                }
+               _Ships = Math.max(_Ships, ((hard_distance(_senderNode, _targetNode) * _targetNode.buildRate / 50) * 1.2 + 3));
                var _towerAttack:Number = hard_getTowerAttack(_senderNode, _targetClose);
                if (_towerAttack > 0 && _Ships < _towerAttack + 30)
                   continue; // 派出的兵力不超估损30兵时不派兵
