@@ -30,6 +30,7 @@ package Game
       // 显示层
       public var gameLayer:Sprite;
       public var gameContainer:Sprite;
+      public var blackholePulseLayer:Sprite;
       public var shipsLayer1:Sprite;
       public var nodeLayer:Sprite;
       public var nodeGlowLayer:Sprite;
@@ -48,17 +49,17 @@ package Game
       public var mouseBatch:QuadBatch;
       // 实体池
       public var entities:Array;
-      public var ais:EntityPool;
-      public var nodes:EntityPool;
-      public var ships:EntityPool;
-      public var warps:EntityPool;
-      public var beams:EntityPool;
-      public var pulses:EntityPool;
-      public var flashes:EntityPool;
-      public var barriers:EntityPool;
-      public var explosions:EntityPool;
-      public var darkPulses:EntityPool;
-      public var fades:EntityPool;
+      public var ais:EntityPool; //AI
+      public var nodes:EntityPool; // 天体
+      public var ships:EntityPool; // 飞船
+      public var warps:EntityPool; // 传送门特效
+      public var beams:EntityPool; // 攻击塔射线
+      public var pulses:EntityPool; // 波
+      public var flashes:EntityPool; // 飞船爆炸光效
+      public var barriers:EntityPool; // 障碍线
+      public var explosions:EntityPool; // 飞船爆炸特效
+      public var darkPulses:EntityPool; // 通用特效
+      public var fades:EntityPool; // 选中特效
       // 其他
       public var cover:Quad; // 通关时的遮罩
       public var ui:GameUI;
@@ -80,6 +81,7 @@ package Game
          // 造一堆实例对象
          gameLayer = new Sprite();
          gameContainer = new Sprite();
+         blackholePulseLayer = new Sprite();
          shipsLayer1 = new Sprite();
          nodeLayer = new Sprite();
          nodeGlowLayer = new Sprite();
@@ -97,6 +99,7 @@ package Game
          mouseBatch = new QuadBatch();
          // 造一堆可视化对象
          gameContainer.addChild(gameLayer);
+         gameLayer.addChild(blackholePulseLayer);
          gameLayer.addChild(shipsLayer1);
          gameLayer.addChild(nodeLayer);
          gameLayer.addChild(nodeGlowLayer);
@@ -123,6 +126,7 @@ package Game
          shapeLayer.addChild(mouseBatch);
          nodeGlowLayer.blendMode = "add";
          uiLayer.blendMode = "add";
+         blackholePulseLayer.blendMode = "multiply"
          gameContainer.x = gameContainer.pivotX = 512;
          gameContainer.y = gameContainer.pivotY = 384;
          juggler = new Juggler();
@@ -418,17 +422,14 @@ package Game
          animateOut();
          if (Globals.levelData[Globals.level] < Globals.currentDifficulty)
             Globals.levelData[Globals.level] = Globals.currentDifficulty;
+         Globals.save();
          if (Globals.levelReached < Globals.level + 1)
          {
             Globals.levelReached = Globals.level + 1;
-            Globals.save();
             dispatchEventWith("next");
          }
          else
-         {
-            Globals.save();
             dispatchEventWith("menu");
-         }
       }
 
       public function animateOut():void // 关卡退出动画，执行hide()
@@ -476,7 +477,7 @@ package Game
       {
          var dt:Number = e.passedTime;
          if (this.alpha == 0)
-            return; // 不是哥们你啥时候不透明度不为零啊
+            return;
          GS.update(dt); // 更新音效计时器
          dt *= this.alpha; // wtf？？
          dt = updateSpeed(dt); // 更新游戏速度
@@ -488,8 +489,7 @@ package Game
             _pool.update(dt);
          }
          ui.update(dt); // 更新ui
-         shipsBatch1.blendMode = "add";
-         shipsBatch2.blendMode = "add";
+         shipsBatch1.blendMode = shipsBatch2.blendMode = "add";
          specialEvents(); // 处理特殊关卡的特殊事件
          if (darkPulse.visible)
             expandDarkPulse(dt);
@@ -501,31 +501,11 @@ package Game
       {
          if (Globals.level == 35 && gameOver) // 36关通关时
          {
-            slowMult -= _dt * 0.75;
-            if (slowMult < 0.1)
-               slowMult = 0.1;
+            slowMult = Math.max(slowMult - _dt * 0.75, 0.1);
             _dt *= slowMult;
          }
-         if (ui.speedBtns[0].toggled) // 减速按钮
-         {
-            if (!(Globals.level == 31 && triggers[0]))
-            {
-               if (!(Globals.level == 35 && triggers[0]))
-               {
-                  _dt *= 0.5;
-               }
-            }
-         }
-         if (ui.speedBtns[2].toggled) // 加速按钮
-         {
-            if (!(Globals.level == 31 && triggers[0]))
-            {
-               if (!(Globals.level == 35 && triggers[0]))
-               {
-                  _dt *= 2;
-               }
-            }
-         }
+         else if (!((Globals.level == 31 || Globals.level == 35) && triggers[0]))
+            _dt *= ui.speedMult;
          return _dt;
       }
 
@@ -538,7 +518,7 @@ package Game
          }
          for each (var _Node:Node in nodes.active) // 统计兵力上限
          {
-            Globals.teamCaps[_Node.team] += _Node.popVal;
+            Globals.teamCaps[_Node.team] += _Node.popVal * Globals.teamNodePops[_Node.team];
          }
          for each (var _Ship:Ship in ships.active) // 统计总兵力
          {
@@ -632,8 +612,7 @@ package Game
                      _boss.changeShipsTeam(6);
                      addAI(6, 2);
                      _boss.triggerTimer = 3;
-                     darkPulse.color = 0;
-                     darkPulse.blendMode = "normal";
+                     darkPulse.team = 6;
                      darkPulse.scaleX = darkPulse.scaleY = 0;
                      darkPulse.visible = true;
                   }
@@ -715,7 +694,7 @@ package Game
                   }
                }
                break;
-            case 35: // 这里末尾有个return
+            case 35:
                if (!gameOver)
                {
                   _boss = nodes.active[0];
@@ -749,7 +728,8 @@ package Game
                      addDarkPulse(_boss, Globals.teamColors[1], 2, 2.5, 0.75, 0, _timer - 5.5);
                      addDarkPulse(_boss, Globals.teamColors[1], 2, 2.5, 1, 0, _timer - 4.5);
                      _boss.triggerTimer = _timer - 2.5;
-                     Globals.levelReached = 36;
+                     if (Globals.levelReached = 35)
+                        Globals.levelReached = 36;
                      if (Globals.levelData[Globals.level] < Globals.currentDifficulty)
                         Globals.levelData[Globals.level] = Globals.currentDifficulty;
                      Globals.save();
@@ -818,8 +798,7 @@ package Game
                         gameOverTimer = 1;
                         slowMult = 1;
                         triggers[2] = true;
-                        darkPulse.color = Globals.teamColors[1];
-                        darkPulse.blendMode = "add";
+                        darkPulse.team = 1;
                         darkPulse.scaleX = darkPulse.scaleY = 0;
                         darkPulse.visible = true;
                         Starling.juggler.tween(gameContainer, 25, {
@@ -851,14 +830,17 @@ package Game
 
       public function expandDarkPulse(_dt:Number):void // 同化波
       {
-         var _team:int = 1;
+         var _team:int = darkPulse.team;
          var _Node:Node = null;
          var _x:Number = NaN;
          var _y:Number = NaN;
          var _Distance:Number = NaN;
          var _Ship:Ship = null;
+         darkPulse.color = Globals.teamColors[_team];
          if (darkPulse.color == 0)
-            _team = 6;
+            darkPulse.blendMode = "normal";
+         else
+            darkPulse.blendMode = "add";
          if (_team == 1)
             darkPulse.scaleX += _dt * 2;
          else
@@ -873,7 +855,7 @@ package Game
          }
          for each (_Node in nodes.active)
          {
-            if (_Node.team == _team)
+            if (_Node.team == _team || _Node.type == 3)
                continue;
             _x = _Node.x - darkPulse.x;
             _y = _Node.y - darkPulse.y;
@@ -902,8 +884,8 @@ package Game
          if (!gameOver) // 通关判断
          {
             checkWinningTeam();
-            if (Globals.level == 31 && winningTeam == 1 || winningTeam == 6)
-               gameOver = false; // 32关禁用常规通关判定，禁止黑色通关
+            if (Globals.level == 31 && winningTeam == 1)
+               gameOver = false; // 32关禁用常规通关判定
             if (gameOver) // 处理游戏结束时的动画
             {
                var _ripple:int = 1;
@@ -916,6 +898,10 @@ package Game
                   _ripple++;
                }
                cover.color = Globals.teamColors[winningTeam];
+               if (cover.color == 0)
+                  cover.blendMode = "normal";
+               else
+                  cover.blendMode = "add";
                Starling.juggler.tween(cover, 1, {"alpha": 0.4});
                Starling.juggler.tween(cover, 1, {
                         "alpha": 0,
@@ -1030,13 +1016,14 @@ package Game
          }
       }
 
-      public function addShip(_Node:Node, _team:int, _productionEffect:Boolean = true):void // 添加单个飞船
+      public function addShip(_Node:Node, _team:int, _productionEffect:Boolean = true):Ship // 添加单个飞船
       {
          var _Ship:Ship;
          if (!(_Ship = ships.getReserve() as Ship))
             _Ship = new Ship();
          _Ship.initShip(this, _team, _Node, _productionEffect);
          ships.addEntity(_Ship);
+         return _Ship;
       }
 
       public function addBarriers():void // 绘制障碍线

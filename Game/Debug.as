@@ -92,11 +92,11 @@ package Game
                 case 87: // W 添加 AI
                     game.addAI(1, 4);
                     break;
-                case 69: // E 清空文本
-                    clear_debug_trace();
+                case 69: // E +100 飞船
+                    game.addShips(game.ui.debug_touch_Node,1,100);
                     break;
-                case 82: // R 替换 AI
-                    replace_AI();
+                case 82: // R 添加特效
+                    game.addDarkPulse(game.ui.debug_touch_Node, Globals.teamColors[game.ui.debug_touch_Node.team], 4, 2.8, 1, 0);
                     break;
                 case 83: // S 跳关
                     game.next();
@@ -252,6 +252,13 @@ package Game
             {
                 _ai.type = 4;
             }
+        }
+
+        public function set_expandDarkPulse(_team:int):void
+        {
+            game.darkPulse.team = _team;
+            game.darkPulse.scaleX = game.darkPulse.scaleY = 0;
+            game.darkPulse.visible = true;
         }
         // #endregion
     }

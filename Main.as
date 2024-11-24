@@ -80,7 +80,7 @@ package
          Globals.load();//导入存档，然后执行start()
       }
       
-      public function start() : void//能力不足AI来凑
+      public function start() : void
       {
          // 声明舞台缩放、尺寸、视口和资源的变量
          var stageScale:Number;

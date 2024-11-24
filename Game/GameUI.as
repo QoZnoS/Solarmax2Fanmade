@@ -38,6 +38,7 @@ package Game
       public var pauseBtn:MenuButton;
       public var restartBtn:MenuButton;
       public var speedBtns:Array;
+      public var speedMult:Number;
       public var selectedNodes:Array;
       public var down_x:Number;
       public var down_y:Number;
@@ -104,10 +105,11 @@ package Game
          restartBtn.x = pauseBtn.x + pauseBtn.width * 1.1;
          restartBtn.y = 123;
          speedBtns = [];
+         speedMult = 1;
          var _SpeedButton:SpeedButton = null;
          for (var i:int = 0; i < 3; i++) // 遍历三个速度按钮
          {
-            _SpeedButton = new SpeedButton("btn_play" + (i + 1).toString(), speedBtns); // 输入的speedBtns为此按钮之前的速度按钮
+            _SpeedButton = new SpeedButton(this,"btn_play" + (i + 1).toString(), speedBtns); // 输入的speedBtns为此按钮之前的速度按钮
             _SpeedButton.x = 870 + i * (pauseBtn.width - 2); // 计算x坐标
             _SpeedButton.y = 124; // 设定y坐标
             if (i == 2)
@@ -181,13 +183,14 @@ package Game
          _GameScene.uiLayer.addChild(closeBtn);
          _GameScene.uiLayer.addChild(pauseBtn);
          var _SpeedButton:SpeedButton = null;
+         speedMult = 1;
          for (var i:int = 0; i < speedBtns.length; i++)
          {
             _SpeedButton = speedBtns[i];
             if (i == 1)
                _SpeedButton.setImage("btn_speed1x", 0.75 + 0.6 * Globals.textSize);
             else
-               _SpeedButton.setImage("btn_play" + (i + 1).toString(), 0.6 + 0.4 * Globals.textSize); // 这里被我简化了
+               _SpeedButton.setImage("btn_play" + (i + 1).toString(), 0.6 + 0.4 * Globals.textSize);
             _GameScene.uiLayer.addChild(_SpeedButton);
             _SpeedButton.init();
             if (i == 1)
@@ -197,8 +200,8 @@ package Game
             }
          }
          speedBtns[2].x = 1024 - speedBtns[2].width + 5 - Globals.margin;
-         speedBtns[1].x = speedBtns[2].x - speedBtns[1].width * 1.1;
-         speedBtns[0].x = speedBtns[1].x - speedBtns[0].width * 1.1;
+         speedBtns[1].x = speedBtns[2].x - speedBtns[1].width * 0.8 - 9;
+         speedBtns[0].x = speedBtns[1].x - speedBtns[0].width * 1.25;
          mouseDown = false;
          if (Globals.touchControls)
             touchQuad.addEventListener("touch", on_touch); // 按操作方式添加事件监听器

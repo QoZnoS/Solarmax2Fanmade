@@ -28,6 +28,7 @@ package Game.Entity
       public var foreground:Boolean; // 决定与天体贴图的图层关系
       public var state:int; // 状态数
       public var targetDist:Number; // 到目标的距离
+      public var followShip:Ship; // 跟随的飞船
       // #endregion
       public function Ship() // 构造函数，用于初始化
       {
@@ -66,10 +67,7 @@ package Game.Entity
          trailLength = 2;
          resetChargeRate();
          jumpDist = 0;
-         if (team != 6)
-            jumpSpeed = 50;
-         else if (team == 6)
-            jumpSpeed = 100;
+         jumpSpeed = Globals.teamShipSpeeds[_team];
          hp = 100;
          state = 0; // 状态数
          if (_productionEffect) // 生产飞船时的动画
@@ -106,6 +104,9 @@ package Game.Entity
                break;
             case 3: // 起飞后，保持贴图2倍拉伸飞向目标天体
                updateJump(_dt);
+               break;
+            case 4: // 航母产生的跟随飞船
+               updateFollow(_dt);
                break;
          }
          if (!node.active)
@@ -230,9 +231,7 @@ package Game.Entity
          var _dAngle:Number = NaN;
          var _x2:Number = NaN;
          var _y2:Number = NaN;
-         jumpSpeed += 4 * _dt; // 飞船加速度
-         if (team == 6)
-            jumpSpeed += 4 * _dt;
+         jumpSpeed += _dt * Globals.teamShipSpeeds[team] / 12.5;
          if (node.orbitNode)
          {
             _x1 = Math.cos(orbitAngle) * orbitDist;
@@ -293,6 +292,7 @@ package Game.Entity
          trailLength = 16 * (jumpSpeed / 50 - 0.5);
          if (trailLength > 75)
             trailLength = 4 * (jumpSpeed / 50 + 13.5625);
+         trailLength = Math.min(trailLength, targetDist);
          trail.width = trailLength;
          trail.rotation = jumpAngle;
          image.rotation = jumpAngle;
@@ -301,6 +301,62 @@ package Game.Entity
             foreground = true;
          else
             foreground = false;
+         drawImage();
+         drawTrail();
+      }
+
+      public function updateFollow(_dt:Number):void // 跟随飞船
+      {
+         if (trail.alpha < 1)
+            trail.alpha += _dt * 2;
+         var _dx:Number = NaN;
+         var _dy:Number = NaN;
+         var _Distance:Number = NaN;
+         var _Angle:Number = NaN;
+         if (followShip.active && followShip.state == 3)
+         {
+            _dx = followShip.x - x;
+            _dy = followShip.y - y;
+            _Distance = _dx * _dx + _dy * _dy;
+            _Angle = Math.atan2(_dy, _dx);
+            if (_Distance < 64)
+            {
+               _dx = node.x + Math.cos(orbitAngle) * orbitDist - x;
+               _dy = node.y + Math.sin(orbitAngle) * orbitDist * 0.15 - y;
+               jumpAngle = Math.atan2(_dy, _dx);
+               jumpSpeed = followShip.jumpSpeed;
+               targetDist = Math.sqrt(_dx * _dx + _dy * _dy);
+               state = 3;
+               followShip = null;
+            }
+            else
+            {
+               x += Math.cos(_Angle) * (followShip.jumpSpeed * 5 + _Distance / 50) * _dt;
+               y += Math.sin(_Angle) * (followShip.jumpSpeed * 5 + _Distance / 50) * _dt;
+               jumpSpeed = followShip.jumpSpeed;
+               jumpAngle = _Angle;
+            }
+         }
+         else
+         {
+            _dx = node.x + Math.cos(orbitAngle) * orbitDist - x;
+            _dy = node.y + Math.sin(orbitAngle) * orbitDist * 0.15 - y;
+            _Distance = _dx * _dx + _dy * _dy;
+               jumpAngle = Math.atan2(_dy, _dx);
+            state = 3;
+            followShip = null;
+            jumpSpeed = Globals.teamShipSpeeds[team];
+            targetDist = Math.sqrt(_Distance);
+         }
+         image.scaleX = Math.max(2, image.scaleX - _dt * 100);
+         image.scaleY = 1 - image.scaleX / 6 * 0.25;
+         trailLength = 16 * (jumpSpeed / 50 - 0.5);
+         if (trailLength > 75)
+            trailLength = 4 * (jumpSpeed / 50 + 13.5625);
+         trailLength = Math.min(trailLength, targetDist);
+         trail.width = trailLength;
+         trail.rotation = jumpAngle;
+         image.rotation = jumpAngle;
          drawImage();
          drawTrail();
       }
@@ -374,6 +430,15 @@ package Game.Entity
          GS.playExplosion(this.x);
       }
 
+      public function followTo(_Ship:Ship):void // 跟随另一艘飞船
+      {
+         this.followShip = _Ship;
+         this.jumpSpeed = _Ship.jumpSpeed;
+         this.node = _Ship.node;
+         this.hp = _Ship.hp;
+         this.state = 4;
+      }
+
       public function moveTo(_Node:Node):void // 移动至参数_Node指定天体
       {
          var _dtime:Number = NaN;
@@ -385,11 +450,7 @@ package Game.Entity
          var _dx:Number = NaN;
          var _dy:Number = NaN;
          var _Distance:Number;
-         // 依势力改变速度
-         if (jumpSpeed > 50 && team != 6)
-            jumpSpeed = 50;
-         if (jumpSpeed > 100 && team == 6)
-            jumpSpeed = 100;
+         jumpSpeed = Globals.teamShipSpeeds[team];
          this.node = _Node;
          orbitDist = (40 + Math.random() * 40) * node.size * 2;
          orbitSpeed = Math.random() * 0.15 + 0.05;

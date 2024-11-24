@@ -56,7 +56,7 @@ package Menus
          // 这部分是初始化内容
          dragging = false;
          hoverIndex = -1;
-         nodeTypes = ["planet", "warp", "planet", "barrier", "tower", "dilator", "starbase", "tower"];
+         nodeTypes = ["planet", "warp", "habitat", "barrier", "tower", "dilator", "starbase", "pulsecannon","blackhole","cloneturret"];
          super();
          quad = new Quad(2, 2, 16777215);
          quadImage = new Image(Root.assets.getTexture("quad8x4"));
@@ -452,7 +452,7 @@ package Menus
 
       public function nextLevel():void
       {
-         if (Globals.level == Globals.maps.length - 1)
+         if (Globals.level == LevelData.maps.length - 1)
             return;
          Starling.juggler.delayCall(function():void
             {
@@ -581,9 +581,20 @@ package Menus
                shapeImage.x = _node[0];
                shapeImage.y = _node[1];
                shapeImage.texture = Root.assets.getTexture(nodeTypes[_node[2]] + "_shape");
-               shapeImage.scaleX = shapeImage.scaleY = _node[3] * _scale;
-               if (_node[2] > 0)
-                  shapeImage.scaleX = shapeImage.scaleY = _scale;
+               switch (_node[2])
+               {
+                  case 0:
+                     shapeImage.scaleX = shapeImage.scaleY = _node[3] * _scale;
+                     break;
+                  case 7:
+                     shapeImage.scaleX = shapeImage.scaleY = 0.8 * _scale;
+                     break;
+                  case 8:
+                     shapeImage.scaleX = shapeImage.scaleY = 0.75 * _scale;
+                     break;
+                  default:
+                     shapeImage.scaleX = shapeImage.scaleY = _scale;
+               }
                shapeImage.color = Globals.teamColors[_node[4]];
                if (shapeImage.color == 0)
                   preview2.addImage(shapeImage);
