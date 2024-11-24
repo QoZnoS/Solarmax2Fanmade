@@ -3,18 +3,18 @@ package Game.Entity
    import Game.GameScene;
    import starling.display.Image;
 
-   public class ASF extends GameEntity
+   public class ASE extends GameEntity
    {
 
       public var image:Image;
 
-      public function ASF()
+      public function ASE()
       {
          super();
          image = new Image(Root.assets.getTexture("barrier_line"));
       }
 
-      public function initASF(_GameScene:GameScene):void
+      public function initASE(_GameScene:GameScene):void
       {
          super.init(_GameScene);
       }
