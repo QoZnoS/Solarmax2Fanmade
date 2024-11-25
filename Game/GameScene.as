@@ -50,7 +50,7 @@ package Game
       public var mouseBatch:QuadBatch;
       // 实体池
       public var entities:Array;
-      public var ais:EntityPool; //AI
+      public var ais:EntityPool; // AI
       public var nodes:EntityPool; // 天体
       public var ships:EntityPool; // 飞船
       public var ases:EntityPool;
@@ -102,14 +102,14 @@ package Game
          // 造一堆可视化对象
          gameContainer.addChild(gameLayer);
          gameLayer.addChild(blackholePulseLayer);
-         gameLayer.addChild(shipsLayer1);
-         gameLayer.addChild(nodeLayer);
-         gameLayer.addChild(nodeGlowLayer);
-         gameLayer.addChild(nodeGlowLayer2);
-         gameLayer.addChild(shipsLayer2);
-         gameLayer.addChild(fxLayer);
-         gameLayer.addChild(shapeLayer);
-         gameLayer.addChild(labelLayer);
+         gameLayer.addChild(shipsLayer1); // 天体之下的飞船图层
+         gameLayer.addChild(nodeLayer); // 天体图层
+         gameLayer.addChild(nodeGlowLayer); // 天体光圈白底图层
+         gameLayer.addChild(nodeGlowLayer2); // 黑色专用光圈白底图层
+         gameLayer.addChild(shipsLayer2); // 天体之上的飞船图层
+         gameLayer.addChild(fxLayer); // 障碍线图层
+         gameLayer.addChild(shapeLayer); // UI图层
+         gameLayer.addChild(labelLayer); // 文本图层
          addChild(gameContainer);
          addChild(uiLayer);
          // 通关时的遮罩
@@ -128,7 +128,7 @@ package Game
          shapeLayer.addChild(mouseBatch);
          nodeGlowLayer.blendMode = "add";
          uiLayer.blendMode = "add";
-         blackholePulseLayer.blendMode = "multiply"
+         blackholePulseLayer.blendMode = "multiply";
          gameContainer.x = gameContainer.pivotX = 512;
          gameContainer.y = gameContainer.pivotY = 384;
          juggler = new Juggler();

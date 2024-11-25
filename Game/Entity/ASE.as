@@ -11,7 +11,7 @@ package Game.Entity
       public function ASE()
       {
          super();
-         image = new Image(Root.assets.getTexture("barrier_line"));
+         image = new Image(Root.assets.getTexture("halo"));
       }
 
       public function initASE(_GameScene:GameScene):void

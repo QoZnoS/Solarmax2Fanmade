@@ -165,7 +165,7 @@ package Game.Entity
          glow.alpha = 0; // 光圈设为不透明
          image.x = halo.x = glow.x = label.x = this.x; // 为贴图输入X
          image.y = halo.y = glow.y = label.y = this.y; // 为贴图输入Y
-         image.scaleX = image.scaleY = halo.scaleX = halo.scaleY = glow.scaleX = glow.scaleY = 1; // 设定贴图缩放（starling插件内容
+         image.scaleX = image.scaleY = halo.scaleX = halo.scaleY = glow.scaleX = glow.scaleY = 1; // 设定贴图缩放
          image.color = halo.color = label.color = Globals.teamColors[_team]; // 设定贴图颜色为势力颜色
          label.y += 50 * _size; // 计算文本Y坐标
          label.x += 30 * _size; // 计算文本X坐标
