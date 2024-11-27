@@ -10,8 +10,23 @@ package
       public static var fileStream:FileStream;
       public static var difficulty:Array; // 难度标识数据
       public static var currentFile:Array; // 当前读取的文件
-      public static var extensions:XML;
-
+      public static var extensions:XML =
+         <extensions version="1.0">
+            <data id="0">
+                 <level id="27" describe="ORIGINAL GAME">
+                     <node tag="1" startval="50"/>
+                 </level>
+             </data>
+             <data id="1" teamCount="8" describe="Dark Empire Revival">
+                 <team id="1" color="0" captureSpeed="2" shipSpeed="100"/>
+                <team id="6" color="16777215" nodePop="10000"/>
+                <team id="7" color="6272767"/>
+                <level id="22">
+                    <team id="1" captureSpeed="50"/>
+               </level>
+           </data>
+         </extensions>
+      ;
       /*
          下面这个数组是关卡数据，这里是关于这坨数组的解释
          这是个五维数组，由外到内依次是关卡配置，全部关卡&难度&作者，单个关卡，单个天体，天体的属性值
@@ -43,6 +58,7 @@ package
          fileStream = new FileStream();
          if (file.exists)
             loadExtensions();
+         extensions.ignoreComments = true; // 忽略注释
       }
 
       public static function load():void // 导入关卡文件
