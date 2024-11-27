@@ -10,7 +10,7 @@ package
       public static var fileStream:FileStream;
       public static var difficulty:Array; // 难度标识数据
       public static var currentFile:Array; // 当前读取的文件
-      public static var ASE:XML; // 储存特效数据
+      public static var extensions:XML;
 
       /*
          下面这个数组是关卡数据，这里是关于这坨数组的解释
@@ -39,10 +39,10 @@ package
          }
          else
             load(); // 导入文件
-         file = File.applicationDirectory.resolvePath("textures/ASE.xml");
+         file = File.applicationDirectory.resolvePath("extensions.xml");
          fileStream = new FileStream();
          if (file.exists)
-            loadASE();
+            loadExtensions();
       }
 
       public static function load():void // 导入关卡文件
@@ -56,12 +56,12 @@ package
          difficulty = currentFile[1]; // 设置Difficulty
       }
 
-      private static function loadASE():void
+      private static function loadExtensions():void
       {
          fileStream.open(file, "read");
-         var _ASE:String = String(fileStream.readMultiByte(fileStream.bytesAvailable, "utf-8"));
+         var _extensions:String = String(fileStream.readMultiByte(fileStream.bytesAvailable, "utf-8"));
          fileStream.close();
-         ASE = JSON.parse(_ASE) as Array;
+         extensions = XML(_extensions);
       }
    }
 }

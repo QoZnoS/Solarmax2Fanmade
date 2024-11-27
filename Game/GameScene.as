@@ -3,7 +3,6 @@
 */
 package Game
 {
-   import Game.Entity.ASE;
    import Game.Entity.BarrierFX;
    import Game.Entity.BeamFX;
    import Game.Entity.DarkPulse;
@@ -142,7 +141,6 @@ package Game
          ais = new EntityPool();
          nodes = new EntityPool();
          ships = new EntityPool();
-         ases = new EntityPool();
          warps = new EntityPool();
          beams = new EntityPool();
          pulses = new EntityPool();
@@ -151,7 +149,7 @@ package Game
          explosions = new EntityPool();
          darkPulses = new EntityPool();
          fades = new EntityPool();
-         entities = [ships, nodes, ais, ases, warps, beams, pulses, flashes, barriers, explosions, darkPulses, fades]; // 实体池列表
+         entities = [ships, nodes, ais, warps, beams, pulses, flashes, barriers, explosions, darkPulses, fades]; // 实体池列表
          triggers = [false, false, false, false, false]; // 特殊事件
          barrierLines = []; // 障碍连接数据
          ui = new GameUI();
@@ -1079,15 +1077,6 @@ package Game
       }
       // #endregion
       // #region 添加特效
-      public function addASE():void
-      {
-         var _ASE:ASE;
-         if (!(_ASE = ases.getReserve() as ASE))
-            _ASE = new ASE();
-         _ASE.initASE(this);
-         ases.addEntity(_ASE);
-      }
-
       public function addWarp(_GameScene:Number, _x:Number, _y:Number, _prevX:Number, _prevY:uint, _foreground:Boolean):void
       {
          var _warp:WarpFX;

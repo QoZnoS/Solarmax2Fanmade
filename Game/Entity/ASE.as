@@ -1,3 +1,5 @@
+//动画系统废案，谁爱做谁做去
+
 package Game.Entity
 {
    import Game.GameScene;
@@ -6,7 +8,11 @@ package Game.Entity
    public class ASE extends GameEntity
    {
 
-      public var image:Image;
+      private var image:Image;
+      private var image_id:String;
+      private var animate_id:String;
+      private var static:int;
+      private var team:int;
 
       public function ASE()
       {
@@ -14,9 +20,10 @@ package Game.Entity
          image = new Image(Root.assets.getTexture("halo"));
       }
 
-      public function initASE(_GameScene:GameScene):void
+      public function initASE(_GameScene:GameScene,_Anid:String,_x:Number,_y:Number,_team:int):void
       {
          super.init(_GameScene);
+         this.anid = _Anid;
       }
 
       override public function update(dt:Number):void
